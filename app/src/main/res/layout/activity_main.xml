@@ -30,4 +30,21 @@
         android:id="@+id/bt_off"
         android:layout_gravity="right|bottom"
          />
+
+    <TextView
+        android:layout_width="300dp"
+        android:layout_height="36dp"
+        android:text="New Text"
+        android:id="@+id/tw_name"
+        android:layout_gravity="center_horizontal|top"
+        android:gravity="center" />
+
+    <TextView
+        android:layout_width="300dp"
+        android:layout_height="36dp"
+        android:text="New Text"
+        android:id="@+id/wt_message"
+        android:layout_gravity="center_horizontal|top"
+        android:layout_marginTop="50dp"
+        android:gravity="center" />
 </FrameLayout>

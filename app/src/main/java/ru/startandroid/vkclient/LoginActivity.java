@@ -25,9 +25,9 @@ public class LoginActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         VKUIHelper.onCreate(this);
-        //Инициализация SDK - передаем слушатель и id standalone-приложения
+        // Инициализация SDK - передаем слушатель и id standalone-приложения
         VKSdk.initialize(listener, APP_ID);
-        //Если token в наличии - запускаем активность, если нет - авторизацию
+        // Если token в наличии - запускаем активность, если нет - авторизацию
         if (VKSdk.wakeUpSession()) {
             startMainActivity();
         }else{
@@ -43,7 +43,7 @@ public class LoginActivity extends ActionBarActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        //Если получен ответ от VKOpenAuthActivity - вызывается один из методов слушателя listener
+        // Если получен ответ от VKOpenAuthActivity - вызывается один из методов слушателя listener
         super.onActivityResult(requestCode, resultCode, data);
         VKUIHelper.onActivityResult(this,requestCode, resultCode, data);
     }
@@ -54,7 +54,7 @@ public class LoginActivity extends ActionBarActivity {
         VKUIHelper.onDestroy(this);
     }
 
-    //Слушатель для VKSdk
+    // Слушатель для VKSdk
     VKSdkListener listener = new VKSdkListener() {
         @Override
         public void onCaptchaError(VKError captchaError) {
@@ -64,7 +64,7 @@ public class LoginActivity extends ActionBarActivity {
         @Override
         public void onReceiveNewToken(VKAccessToken newToken) {
             super.onReceiveNewToken(newToken);
-            //Получение нового токена после авторицации и запуск активности
+            // Получение нового токена после авторицации и запуск активности
             startMainActivity();
 
         }
@@ -72,13 +72,13 @@ public class LoginActivity extends ActionBarActivity {
         @Override
         public void onAcceptUserToken(VKAccessToken token) {
             super.onAcceptUserToken(token);
-            //Точно не понял, но вроде что о хорошее - запускаем активность
+            // Точно не понял, но вроде что о хорошее - запускаем активность
             startMainActivity();
         }
 
         @Override
         public void onTokenExpired(VKAccessToken expiredToken) {
-            //Токен просрочен, запуск авторизации
+            // Токен просрочен, запуск авторизации
             authorize();
         }
 
@@ -91,7 +91,7 @@ public class LoginActivity extends ActionBarActivity {
     };
 
     private void authorize(){
-        //Запускаем авторизацию со списком разрешений. Результат - запуск VKOpenAuthActivity
+        // Запускаем авторизацию со списком разрешений. Результат - запуск VKOpenAuthActivity
         VKSdk.authorize(scope,true,false);
     }
 

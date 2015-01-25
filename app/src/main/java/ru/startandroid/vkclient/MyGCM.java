@@ -138,8 +138,8 @@ public class MyGCM implements GCM{
     private void register(String regId) {
         // Отправка запроса на подписку устройства на vk.com
         Log.d("myLogs", "sendID="+regId);
-        VKRequest request1 = new VKRequest("account.registerDevice", VKParameters.from("token", regId));
-        request1.executeWithListener(new VKRequest.VKRequestListener(){
+        VKRequest request = new VKRequest("account.registerDevice", VKParameters.from("token", regId));
+        request.executeWithListener(new VKRequest.VKRequestListener(){
 
             @Override
             public void attemptFailed(VKRequest request, int attemptNumber,
@@ -168,8 +168,8 @@ public class MyGCM implements GCM{
 
     private void unregister(String regId) {
         // Запрос на отписку устройства на vk.com
-        VKRequest request1 = new VKRequest("account.unregisterDevice", VKParameters.from("token", regId));
-        request1.executeWithListener(new VKRequest.VKRequestListener(){
+        VKRequest request = new VKRequest("account.unregisterDevice", VKParameters.from("token", regId));
+        request.executeWithListener(new VKRequest.VKRequestListener(){
 
             @Override
             public void attemptFailed(VKRequest request, int attemptNumber,

@@ -38,6 +38,10 @@
             </intent-filter>
         </receiver>
 
+        <service android:name="ru.startandroid.vkclient.LongPoolService">
+
+        </service>
+
 
     </application>
 
