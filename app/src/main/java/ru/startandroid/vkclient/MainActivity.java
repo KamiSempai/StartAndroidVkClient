@@ -4,19 +4,19 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
+import android.widget.ArrayAdapter;
 import com.vk.sdk.VKSdk;
 import com.vk.sdk.VKUIHelper;
 
 
 
-public class MainActivity extends ActionBarActivity implements View.OnClickListener {
+public class MainActivity extends ActionBarActivity implements  MainActivityFriendsListener, MainActivityMessagesListener,ActionBar.OnNavigationListener {
 
     public static final String LOG_TAG = "myLogs";
 
@@ -28,6 +28,8 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     public static final String USER_ONLINE_SERVICE_ACTION = "ru.startandroid.vkclient.USER_ONLINE_SERVICE_ACTION";
     public static final String USER_OFFLINE_SERVICE_ACTION = "ru.startandroid.vkclient.USER_OFFLINE_SERVICE_ACTION";
     public static final String USER_WRITES_SERVICE_ACTION = "ru.startandroid.vkclient.USER_WRITES_SERVICE_ACTION";
+    public static final String AFTER_FRAGMENT_FRIENDS_ADDED_ACTION = "ru.startandroid.vkclient.AFTER_FRAGMENT_FRIENDS_ADDED_ACTION";
+    public static final String AFTER_FRAGMENT_MESSAGES_ADDED_ACTION = "ru.startandroid.vkclient.AFTER_FRAGMENT_MESSAGES_ADDED_ACTION";
 
     //Ключи
     public static final String NEW_MESSAGE_USER_ID_KEY = "NEW_MESSAGE_USER_ID_KEY";
@@ -36,16 +38,23 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     public static final String USER_OFFLINE_USER_ID_KEY = "USER_OFFLINE_USER_ID_KEY";
     public static final String USER_WRITES_USER_ID_KEY = "USER_OFFLINE_USER_ID_KEY";
 
-
+    String[] spinnerNames = new String[] { "Сообщения", "Друзья" };
 
     BroadcastReceiver broadcastReceiver;
     GCM gsm;
+    FragmentListFriends fragmentListFriends;
+    FragmentListMessages fragmentListMessages;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         VKUIHelper.onCreate(this);
         setContentView(R.layout.activity_main);
+        this.setTitle("");
+        fragmentListFriends = new FragmentListFriends();
+        fragmentListMessages = new FragmentListMessages();
+        setFragmentListMessages(); // Ставим фрагмент со списком сообщений на старте активности(позже надо будет добавить сохранение при повороте экрана)
+        setActionBarSpinner();
         broadcastReceiver = new BroadcastReceiver() {
 
             @Override
@@ -70,6 +79,13 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
                     Log.d(LOG_TAG,"Друг "+
                             intent.getStringExtra(USER_OFFLINE_USER_ID_KEY)+
                             " оффлайн");
+                }else if(intent.getAction().equals(MainActivity.AFTER_FRAGMENT_FRIENDS_ADDED_ACTION)){
+                    // Пришел Broadcast из onActivityCreated фрагмента - ставим адаптер
+                    setAdapterForFragmentListFriends();
+                }else if(intent.getAction().equals(MainActivity.AFTER_FRAGMENT_MESSAGES_ADDED_ACTION)){
+                    // Пришел Broadcast из onActivityCreated фрагмента - ставим адаптер
+                    setAdapterForFragmentListMessages();
+
                 }
             }
         };
@@ -78,30 +94,12 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         intFilt.addAction(USER_WRITES_SERVICE_ACTION);
         intFilt.addAction(USER_ONLINE_SERVICE_ACTION);
         intFilt.addAction(USER_OFFLINE_SERVICE_ACTION);
+        intFilt.addAction(AFTER_FRAGMENT_FRIENDS_ADDED_ACTION);
+        intFilt.addAction(AFTER_FRAGMENT_MESSAGES_ADDED_ACTION);
         registerReceiver(broadcastReceiver, intFilt);
-
-        ((Button)findViewById(R.id.bt_logout)).setOnClickListener(this);
-        ((Button)findViewById(R.id.bt_on)).setOnClickListener(this);
-        ((Button)findViewById(R.id.bt_off)).setOnClickListener(this);
 
         gsm = new MyGCM(this);
         new LongPoolConnection(this).connect();// Запуск LongPoolService
-
-    }
-
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()){
-            case R.id.bt_logout:
-                logout();
-                return;
-            case R.id.bt_on:
-                gsm.registerDevice();
-                return;
-            case R.id.bt_off:
-                gsm.unRegisterDevice();
-                return;
-        }
 
     }
 
@@ -145,11 +143,87 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_logout) {
+            logout();
+            return true;
+        }else if (id == R.id.action_gcm_on) {
+            gsm.registerDevice();
+            return true;
+        }else if (id == R.id.action_gcm_off) {
+            gsm.unRegisterDevice();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
+
+    @Override
+    public void eventFromFragmentListFriends() {
+        // Сигнал из фрагмента - делаем что то
+    }
+
+    @Override
+    public void eventFromFragmentListMessages() {
+        // Сигнал из фрагмента - делаем что то
+    }
+
+    private void setAdapterForFragmentListFriends(){
+        // Пришел Broadcast из onActivityCreated фрагмента - ставим адаптер
+        if(fragmentListFriends.isAdded()){
+            FragmentFriendsListener fragmentFriendsListener = (FragmentFriendsListener) fragmentListFriends;
+            fragmentFriendsListener.setAdapter();
+        }
+    }
+
+    private void setAdapterForFragmentListMessages(){
+        // Пришел Broadcast из onActivityCreated фрагмента - ставим адаптер
+        if(fragmentListMessages.isAdded()){
+            FragmentMessagesListener fragmentMessagesListener = (FragmentMessagesListener) fragmentListMessages;
+            fragmentMessagesListener.setAdapter();
+        }
+    }
+
+    private void setFragmentListFriends(){
+        if (fragmentListFriends.isAdded())
+            return;
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.container, fragmentListFriends)
+                .commit();
+
+    }
+
+    private void setFragmentListMessages(){
+        if (fragmentListMessages.isAdded())
+            return;
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.container, fragmentListMessages)
+                .commit();
+    }
+
+    private void setActionBarSpinner(){
+        //Установка выпадающего списка в ActionBar
+        ActionBar bar = getSupportActionBar();
+        bar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getSupportActionBar().getThemedContext(),
+                android.R.layout.simple_spinner_item, spinnerNames);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        bar.setListNavigationCallbacks(adapter, this);
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(int i, long l) {
+        switch (i){
+            case 0:
+                setFragmentListMessages();
+                break;
+            case 1:
+                setFragmentListFriends();
+                break;
+        }
+        return false;
+    }
+
 
 }
