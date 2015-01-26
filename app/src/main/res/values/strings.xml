@@ -3,9 +3,9 @@
 
     <string name="app_name">VK Client</string>
     <string name="hello_world">Hello world!</string>
-    <string name="action_settings">Settings</string>
-    <string name="empty">У вас пока нет друзей.</string>
-    <string name="friends">Друзья</string>
-    <string name="logout">Выход</string>
+    <string name="action_logout">Logout</string>
+    <string name="action_gcm_on">GCM ON</string>
+    <string name="action_gcm_off">GCM OFF</string>
+    <string name="empty">Друзей нет</string>
 
 </resources>
