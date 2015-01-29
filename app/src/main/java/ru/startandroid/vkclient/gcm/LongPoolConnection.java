@@ -1,4 +1,4 @@
-package ru.startandroid.vkclient;
+package ru.startandroid.vkclient.gcm;
 
 import android.content.Context;
 import android.content.Intent;
@@ -14,10 +14,10 @@ public class LongPoolConnection {
 
     public static final String START_SERVICE_ACTION = "ru.startandroid.vkclient.START_SERVICE_ACTION";
 
-    Context context;
+    Context mContext;
 
     public LongPoolConnection(Context context){
-        this.context = context;
+        mContext = context;
     }
 
     public void connect(){
@@ -28,7 +28,7 @@ public class LongPoolConnection {
             @Override
             public void onComplete(VKResponse response) {
                 super.onComplete(response);
-                context.startService(new Intent(context, LongPoolService.class)
+                mContext.startService(new Intent(mContext, LongPoolService.class)
                         .setAction(START_SERVICE_ACTION)
                         .putExtra("json", response.json.toString()));
             }

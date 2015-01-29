@@ -1,4 +1,4 @@
-package ru.startandroid.vkclient;
+package ru.startandroid.vkclient.activities;
 
 import android.app.AlertDialog;
 import android.content.Intent;
@@ -12,6 +12,8 @@ import com.vk.sdk.VKSdkListener;
 import com.vk.sdk.VKUIHelper;
 import com.vk.sdk.api.VKError;
 import com.vk.sdk.dialogs.VKCaptchaDialog;
+
+import ru.startandroid.vkclient.activities.MainActivity;
 
 
 /**

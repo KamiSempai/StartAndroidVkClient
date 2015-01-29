@@ -1,4 +1,4 @@
-package ru.startandroid.vkclient;
+package ru.startandroid.vkclient.gcm;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -14,22 +14,40 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import ru.startandroid.vkclient.activities.MainActivity;
+import ru.startandroid.vkclient.gcm.LongPoolConnection;
+
 
 /**
  * Created by pc on 24.01.2015.
  */
 public class LongPoolService extends Service {
 
-    BroadcastReceiver broadcastReceiver;
-    VKJsonOperation vkJsonOperation;
-    String ts, server, key;
-    AsyncTaskLoader asyncTaskLoader;
+    public static final String NEW_MESSAGE_SERVICE_ACTION = "ru.startandroid.vkclient.NEW_MESSAGE_SERVICE_ACTION";
+    public static final String USER_ONLINE_SERVICE_ACTION = "ru.startandroid.vkclient.USER_ONLINE_SERVICE_ACTION";
+    public static final String USER_OFFLINE_SERVICE_ACTION = "ru.startandroid.vkclient.USER_OFFLINE_SERVICE_ACTION";
+    public static final String USER_WRITES_SERVICE_ACTION = "ru.startandroid.vkclient.USER_WRITES_SERVICE_ACTION";
+
+    //Ключи
+    public static final String NEW_MESSAGE_USER_ID_KEY = "NEW_MESSAGE_USER_ID_KEY";
+    public static final String NEW_MESSAGE_FLAG_KEY = "NEW_MESSAGE_FLAG_KEY";
+    public static final String NEW_MESSAGE_MESSAGE_ID = "NEW_MESSAGE_MESSAGE_ID ";
+    public static final String NEW_MESSAGE_TEXT_KEY = "NEW_MESSAGE_TEXT_KEY";
+
+    public static final String USER_ONLINE_USER_ID_KEY = "USER_ONLINE_USER_ID_KEY";
+    public static final String USER_OFFLINE_USER_ID_KEY = "USER_OFFLINE_USER_ID_KEY";
+    public static final String USER_WRITES_USER_ID_KEY = "USER_WRITES_USER_ID_KEY";
+
+    BroadcastReceiver mBroadcastReceiver;
+    VKJsonOperation mVkJsonOperation;
+    String mTs, mServer, mKey;
+    AsyncTaskLoader mAsyncTaskLoader;
 
 
     @Override
     public void onCreate() {
         super.onCreate();
-        broadcastReceiver = new BroadcastReceiver() {
+        mBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if(intent.getAction().equals(MainActivity.DESTROY_SERVICE_ACTION)){
@@ -41,7 +59,7 @@ public class LongPoolService extends Service {
         };
         IntentFilter intFilt = new IntentFilter();
         intFilt.addAction(MainActivity.DESTROY_SERVICE_ACTION);
-        registerReceiver(broadcastReceiver, intFilt);
+        registerReceiver(mBroadcastReceiver, intFilt);
 
     }
 
@@ -65,7 +83,7 @@ public class LongPoolService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        asyncTaskLoader.cancel(true);
+        mAsyncTaskLoader.cancel(true);
     }
 
     @Override
@@ -76,10 +94,10 @@ public class LongPoolService extends Service {
     private void extractJSON(String jsonString) throws JSONException {
         // Достаем из полученного объекта 3 строки, формируем из них url для соединения и грузим
         JSONObject jsonObject = new JSONObject(jsonString);
-        ts = jsonObject.getJSONObject("response").getString("ts");
-        server = jsonObject.getJSONObject("response").getString("server");
-        key = jsonObject.getJSONObject("response").getString("key");
-        loadLongPoolUrl(createLongPoolUrl(server, key, ts));
+        mTs = jsonObject.getJSONObject("response").getString("ts");
+        mServer = jsonObject.getJSONObject("response").getString("server");
+        mKey = jsonObject.getJSONObject("response").getString("key");
+        loadLongPoolUrl(createLongPoolUrl(mServer, mKey, mTs));
     }
 
     private String createLongPoolUrl(String server,String key,String ts){
@@ -88,8 +106,8 @@ public class LongPoolService extends Service {
 
     private void loadLongPoolUrl(String url){
         // Соединяемся с сервером с помощью класса VKJsonOperation в отдельном потоке
-        vkJsonOperation = new VKJsonOperation(new HttpGet(url));
-        vkJsonOperation.setJsonOperationListener(new VKJsonOperation.VKJSONOperationCompleteListener() {
+        mVkJsonOperation = new VKJsonOperation(new HttpGet(url));
+        mVkJsonOperation.setJsonOperationListener(new VKJsonOperation.VKJSONOperationCompleteListener() {
             @Override
             public void onComplete(VKJsonOperation operation, JSONObject response) {
                 super.onComplete(operation, response);
@@ -105,7 +123,7 @@ public class LongPoolService extends Service {
                 connectAfterError();
             }
         });
-        asyncStart(vkJsonOperation);
+        asyncStart(mVkJsonOperation);
     }
 
     private void connectAfterError(){
@@ -113,8 +131,8 @@ public class LongPoolService extends Service {
     }
 
     private void asyncStart(VKJsonOperation op){
-        asyncTaskLoader = new AsyncTaskLoader();
-        asyncTaskLoader.execute(op);
+        mAsyncTaskLoader = new AsyncTaskLoader();
+        mAsyncTaskLoader.execute(op);
     }
 
     private void extractResponse(JSONObject jsonObject){
@@ -122,7 +140,7 @@ public class LongPoolService extends Service {
         // В ответе приходит - новый ts, переписываем url, снова грузим и так по кругу
 
         try {
-            ts = jsonObject.getString("ts");
+            mTs = jsonObject.getString("ts");
             if (!jsonObject.isNull("updates")){
                 JSONArray jsonArray = jsonObject.getJSONArray("updates");
                 for(int i=0;i<jsonArray.length();i++ ){
@@ -132,11 +150,14 @@ public class LongPoolService extends Service {
                         case 4:
                             // Массив вида [4,$message_id,$flags,$from_id,$timestamp,$subject,$text,$attachments]
                             // Добавление нового сообщения - 8 элементов
-                            // Берем 4-й(id отправителя) и 7-й(текст сообщения) и отправляем в MainActivity
+                            // Берем 2-й(id сообщения), 3-й(флаги), 4-й(id отправителя) и 7-й(текст сообщения) и отправляем в MainActivity
                             sendBroadcast(new Intent()
-                                    .setAction(MainActivity.NEW_MESSAGE_SERVICE_ACTION)
-                                    .putExtra(MainActivity.NEW_MESSAGE_USER_ID_KEY,myArray.getString(3))
-                                    .putExtra(MainActivity.NEW_MESSAGE_TEXT_KEY,myArray.getString(6))
+                                    .setAction(NEW_MESSAGE_SERVICE_ACTION)
+                                    .putExtra(NEW_MESSAGE_USER_ID_KEY,myArray.getString(3))
+                                    .putExtra(NEW_MESSAGE_FLAG_KEY,Integer.valueOf(myArray.getString(2)))
+                                    .putExtra(NEW_MESSAGE_TEXT_KEY,myArray.getString(6))
+                                    .putExtra(NEW_MESSAGE_MESSAGE_ID,myArray.getString(1))
+
                             );
                             break;
                         case 8:
@@ -144,8 +165,8 @@ public class LongPoolService extends Service {
                             // Друг стал онлайн - 3 элемента
                             // Отправляем 2-й - id друга
                             sendBroadcast(new Intent()
-                                            .setAction(MainActivity.USER_ONLINE_SERVICE_ACTION)
-                                            .putExtra(MainActivity.USER_ONLINE_USER_ID_KEY,myArray.getString(1).replace("-",""))
+                                            .setAction(USER_ONLINE_SERVICE_ACTION)
+                                            .putExtra(USER_ONLINE_USER_ID_KEY,myArray.getString(1).replace("-",""))
                             );
                             break;
                         case 9:
@@ -153,8 +174,8 @@ public class LongPoolService extends Service {
                             // Друг ушел в оффлайн - 3 элемента
                             // Отправляем 2-й - id друга
                             sendBroadcast(new Intent()
-                                            .setAction(MainActivity.USER_OFFLINE_SERVICE_ACTION)
-                                            .putExtra(MainActivity.USER_OFFLINE_USER_ID_KEY,myArray.getString(1).replace("-",""))
+                                            .setAction(USER_OFFLINE_SERVICE_ACTION)
+                                            .putExtra(USER_OFFLINE_USER_ID_KEY,myArray.getString(1).replace("-",""))
                             );
                             break;
                         case 61:
@@ -162,15 +183,15 @@ public class LongPoolService extends Service {
                             // Пользователь начал набирать текст в диалоге - 3 элемента
                             // Отправляем 2-й - id пользователя
                             sendBroadcast(new Intent()
-                                            .setAction(MainActivity.USER_WRITES_SERVICE_ACTION)
-                                            .putExtra(MainActivity.USER_WRITES_USER_ID_KEY,myArray.getString(1).replace("-",""))
+                                            .setAction(USER_WRITES_SERVICE_ACTION)
+                                            .putExtra(USER_WRITES_USER_ID_KEY,myArray.getString(1).replace("-",""))
                             );
                             break;
                     }
                 }
             }
 
-            loadLongPoolUrl(createLongPoolUrl(server, key, ts));
+            loadLongPoolUrl(createLongPoolUrl(mServer, mKey, mTs));
 
         } catch (JSONException e) {
             e.printStackTrace();

@@ -1,12 +1,17 @@
-package ru.startandroid.vkclient.friends;
+package ru.startandroid.vkclient.fragments;
 
-import android.app.ListFragment;
+
 import android.os.Bundle;
+import android.support.v4.app.ListFragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import ru.startandroid.vkclient.R;
+import ru.startandroid.vkclient.friends.FriendsAdapter;
+import ru.startandroid.vkclient.friends.FriendsArray;
+import ru.startandroid.vkclient.friends.FriendsRequest;
+import ru.startandroid.vkclient.friends.GeneralFriendsFields;
 
 /**
  * @author Samofal Vitaliy

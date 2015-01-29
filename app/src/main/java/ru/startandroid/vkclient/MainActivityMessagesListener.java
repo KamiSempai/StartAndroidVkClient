@@ -5,6 +5,6 @@ package ru.startandroid.vkclient;
  */
 public interface MainActivityMessagesListener {
 
-    public void eventFromFragmentListMessages();
+    public void eventFromFragmentListMessages(String id);
 
 }

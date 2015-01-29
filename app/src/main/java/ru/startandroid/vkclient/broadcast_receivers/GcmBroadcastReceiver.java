@@ -1,4 +1,4 @@
-package ru.startandroid.vkclient;
+package ru.startandroid.vkclient.broadcast_receivers;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -16,6 +16,9 @@ import com.vk.sdk.api.VKResponse;
 
 import org.json.JSONException;
 
+import ru.startandroid.vkclient.activities.MainActivity;
+import ru.startandroid.vkclient.R;
+
 /**
  * Created by pc on 24.01.2015.
  */
@@ -23,10 +26,10 @@ public class GcmBroadcastReceiver extends WakefulBroadcastReceiver implements So
 
     private final String GCM_ACTION = "com.google.android.c2dm.intent.RECEIVE";
     private final int NOTIFY_ID = 123;
-    private String message;
-    private String first_name;
-    private String last_name;
-    private Context context;
+    private String mMessage;
+    private String mFirst_name;
+    private String mLast_name;
+    private Context mContext;
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -35,16 +38,16 @@ public class GcmBroadcastReceiver extends WakefulBroadcastReceiver implements So
         // Запускаем метод sendNotification()
         if (!intent.getAction().equals(GCM_ACTION))
             return;
-        this.context = context.getApplicationContext();
-        message = intent.getStringExtra("text");
+        mContext = context.getApplicationContext();
+        mMessage = intent.getStringExtra("text");
         new VKRequest("users.get", VKParameters.from("user_ids", intent.getStringExtra("uid")))
                 .executeWithListener(new VKRequest.VKRequestListener() {
                     @Override
                     public void onComplete(VKResponse response) {
                         super.onComplete(response);
                         try {
-                            first_name = response.json.getJSONArray("response").getJSONObject(0).getString("first_name");
-                            last_name = response.json.getJSONArray("response").getJSONObject(0).getString("last_name");
+                            mFirst_name = response.json.getJSONArray("response").getJSONObject(0).getString("first_name");
+                            mLast_name = response.json.getJSONArray("response").getJSONObject(0).getString("last_name");
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -65,11 +68,11 @@ public class GcmBroadcastReceiver extends WakefulBroadcastReceiver implements So
 
     private void sendNotification() {
         // Формируем строку уведомления и отправляем уведомление в статус-бар
-        String nString = last_name + " " + first_name + ": " + message;
-        NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        Intent intent = new Intent(context, MainActivity.class);
-        PendingIntent pIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);// С флагами не разобрался какой лучше
-        Notification notification = new Notification.Builder(context).setContentIntent(pIntent)
+        String nString = mLast_name + " " + mFirst_name + ": " + mMessage;
+        NotificationManager nm = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+        Intent intent = new Intent(mContext, MainActivity.class);
+        PendingIntent pIntent = PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);// С флагами не разобрался какой лучше
+        Notification notification = new Notification.Builder(mContext).setContentIntent(pIntent)
                 .setSmallIcon(R.drawable.message)
                 .setWhen(System.currentTimeMillis())
                 .setContentText(nString)
@@ -84,7 +87,7 @@ public class GcmBroadcastReceiver extends WakefulBroadcastReceiver implements So
         // Создаем звуковое оповещение
         SoundPool sp = new SoundPool(5, AudioManager.STREAM_MUSIC, 0);
         sp.setOnLoadCompleteListener(this);
-        sp.load(context, R.raw.zvuk, 1);
+        sp.load(mContext, R.raw.zvuk, 1);
     }
 
 

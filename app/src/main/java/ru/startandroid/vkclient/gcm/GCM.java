@@ -1,4 +1,4 @@
-package ru.startandroid.vkclient;
+package ru.startandroid.vkclient.gcm;
 
 import android.app.Activity;
 import android.content.Context;
@@ -18,35 +18,37 @@ import com.vk.sdk.api.VKResponse;
 
 import java.io.IOException;
 
+import ru.startandroid.vkclient.activities.MainActivity;
+
 
 /**
  * Created by pc on 25.01.2015.
  */
-public class MyGCM implements GCM{
+public class GCM {
 
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
     private static final String PROPERTY_REG_ID = "registration_id";
     private static final String PROPERTY_APP_VERSION = "appVersion";
-    GoogleCloudMessaging gcm;
-    Context context;
-    Activity activity;
+    GoogleCloudMessaging mGcm;
+    Context mContext;
+    Activity mActivity;
     String SENDER_ID = "536340172064";
-    String regid;
+    String mRegId;
 
-    public MyGCM(Activity activity){
-        this.activity = activity;
-        context = activity.getApplicationContext();
+    public GCM(Activity activity){
+        this.mActivity = activity;
+        mContext = activity.getApplicationContext();
     }
 
 
-    @Override
+
     public void registerDevice() {
         // Подписка устройства
         if (checkPlayServices()) {
-            gcm = GoogleCloudMessaging.getInstance(context);
-            regid = getRegistrationId(context);
-            register(regid);
-            if (regid.isEmpty()) {
+            mGcm = GoogleCloudMessaging.getInstance(mContext);
+            mRegId = getRegistrationId(mContext);
+            register(mRegId);
+            if (mRegId.isEmpty()) {
                 registerInBackground();
             }
 
@@ -55,14 +57,14 @@ public class MyGCM implements GCM{
         }
     }
 
-    @Override
+
     public void unRegisterDevice() {
         // Отписка устройства
         if (checkPlayServices()) {
-            gcm = GoogleCloudMessaging.getInstance(context);
-            regid = getRegistrationId(context);
-            unregister(regid);
-            if (regid.isEmpty()) {
+            mGcm = GoogleCloudMessaging.getInstance(mContext);
+            mRegId = getRegistrationId(mContext);
+            unregister(mRegId);
+            if (mRegId.isEmpty()) {
                 registerInBackground();
             }
         } else {
@@ -73,14 +75,14 @@ public class MyGCM implements GCM{
 
     private boolean checkPlayServices() {
         // Проверка устройства на наличие Google Play Services APK
-        int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(context);
+        int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(mContext);
         if (resultCode != ConnectionResult.SUCCESS) {
             if (GooglePlayServicesUtil.isUserRecoverableError(resultCode)) {
-                GooglePlayServicesUtil.getErrorDialog(resultCode, activity,
+                GooglePlayServicesUtil.getErrorDialog(resultCode, mActivity,
                         PLAY_SERVICES_RESOLUTION_REQUEST).show();
             } else {
                 Log.i("myLogs", "This device is not supported.");
-                activity.finish();
+                mActivity.finish();
             }
             return false;
         }
@@ -205,13 +207,13 @@ public class MyGCM implements GCM{
         protected String doInBackground(Void... params) {
             String msg = "";
             try {
-                if (gcm == null) {
-                    gcm = GoogleCloudMessaging.getInstance(context);
+                if (mGcm == null) {
+                    mGcm = GoogleCloudMessaging.getInstance(mContext);
                 }
-                regid = gcm.register(SENDER_ID);
-                msg = "Device registered, registration ID=" + regid;
-                register(regid);
-                storeRegistrationId(context, regid);
+                mRegId = mGcm.register(SENDER_ID);
+                msg = "Device registered, registration ID=" + mRegId;
+                register(mRegId);
+                storeRegistrationId(mContext, mRegId);
             } catch (IOException ex) {
                 msg = "Error :" + ex.getMessage();
             }
