@@ -37,7 +37,7 @@
             </intent-filter>
         </receiver>
 
-        <service android:name=".gcm.LongPoolService">
+        <service android:name=".gcm.LongPollService">
 
         </service>
 
