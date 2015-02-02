@@ -13,6 +13,10 @@ import org.apache.http.client.methods.HttpGet;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import java.util.HashMap;
+import java.util.Timer;
+import java.util.TimerTask;
+
 import ru.startandroid.vkclient.activities.MainActivity;
 
 
@@ -21,12 +25,15 @@ import ru.startandroid.vkclient.activities.MainActivity;
  */
 public class LongPollService extends Service {
 
-    public static final String NEW_MESSAGE_LP_ACTION = "ru.startandroid.vkclient.NEW_MESSAGE_SERVICE_ACTION";// Новое сообщение
-    public static final String USER_ONLINE_LP_ACTION = "ru.startandroid.vkclient.USER_ONLINE_SERVICE_ACTION";// Пользователь стал онлайн
-    public static final String USER_OFFLINE_LP_ACTION = "ru.startandroid.vkclient.USER_OFFLINE_SERVICE_ACTION";// Пользователь стал оффлайн
-    public static final String USER_WRITES_LP_ACTION = "ru.startandroid.vkclient.USER_WRITES_SERVICE_ACTION";// Пользователь набирает текст
+    public static final String DESTROY_SERVICE_ACTION = "ru.startandroid.vkclient.DESTROY_SERVICE"; // Уничтожение сервиса
+    public static final String NEW_MESSAGE_LP_ACTION = "ru.startandroid.vkclient.NEW_MESSAGE_LP_ACTION";// Новое сообщение
+    public static final String USER_ONLINE_LP_ACTION = "ru.startandroid.vkclient.USER_ONLINE_LP_ACTION";// Пользователь стал онлайн
+    public static final String USER_OFFLINE_LP_ACTION = "ru.startandroid.vkclient.USER_OFFLINE_LP_ACTION";// Пользователь стал оффлайн
+    public static final String USER_WRITES_LP_ACTION = "ru.startandroid.vkclient.USER_WRITES_LP_ACTION";// Пользователь набирает текст
+    public static final String USER_STOP_WRITES_LP_ACTION = "ru.startandroid.vkclient.USER_STOP_WRITES_LP_ACTION"; // Пользователь прекратил набирать сообщение
     public static final String READ_INPUT_MESSAGES_LP_ACTION = "ru.startandroid.vkclient.READ_INPUT_MESSAGES_LP_ACTION";// Прочтение всех входящих сообщений
     public static final String READ_OUTPUT_MESSAGES_LP_ACTION = "ru.startandroid.vkclient.READ_OUTPUT_MESSAGES_LP_ACTION";// Прочтение всех исходящих сообщений
+
 
     //Ключи extra данных для sendBroadcast()
     //
@@ -41,6 +48,8 @@ public class LongPollService extends Service {
     public static final String USER_OFFLINE_USER_ID_KEY = "USER_OFFLINE_USER_ID_KEY";
     // USER_WRITES_LP_ACTION
     public static final String USER_WRITES_USER_ID_KEY = "USER_WRITES_USER_ID_KEY";
+    // USER_STOP_WRITES_LP_ACTION
+    public static final String USER_STOP_WRITES_USER_ID_KEY = "USER_STOP_WRITES_USER_ID_KEY";
     // READ_INPUT_LP_ACTION
     public static final String USER_ID_INPUT_MESSAGE_KEY = "USER_ID_INPUT_MESSAGE_KEY";
     public static final String LOCAL_ID_INPUT_MESSAGE_KEY = "LOCAL_ID_INPUT_MESSAGE_KEY";
@@ -48,13 +57,14 @@ public class LongPollService extends Service {
     public static final String USER_ID_OUTPUT_MESSAGE_KEY = "USER_ID_OUTPUT_MESSAGE_KEY";
     public static final String LOCAL_ID_OUTPUT_MESSAGE_KEY = "LOCAL_ID_OUTPUT_MESSAGE_KEY";
 
-
-
+    boolean state;
+    final int DELAY = 6000;
     BroadcastReceiver mBroadcastReceiver;
     VKJsonOperation mVkJsonOperation;
     String mTs, mServer, mKey;
     AsyncTaskLoader mAsyncTaskLoader;
-    boolean state;
+    Timer mTimer;
+    HashMap<String,TimerTask> mTimerTaskHashMap;
 
 
     @Override
@@ -63,7 +73,7 @@ public class LongPollService extends Service {
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if(intent.getAction().equals(MainActivity.DESTROY_SERVICE_ACTION)){
+                if(intent.getAction().equals(DESTROY_SERVICE_ACTION)){
                     // Broadcast приходит после унижтожения MainActivity - уничтожаем сервис
                     stopSelf();
                 }
@@ -71,8 +81,10 @@ public class LongPollService extends Service {
             }
         };
         IntentFilter intFilt = new IntentFilter();
-        intFilt.addAction(MainActivity.DESTROY_SERVICE_ACTION);
+        intFilt.addAction(DESTROY_SERVICE_ACTION);
         registerReceiver(mBroadcastReceiver, intFilt);
+        mTimerTaskHashMap = new HashMap<String,TimerTask>();
+        mTimer = new Timer();
         state = true;
 
     }
@@ -99,6 +111,10 @@ public class LongPollService extends Service {
         super.onDestroy();
         state = false;
         unregisterReceiver(mBroadcastReceiver);
+        if (mTimer !=null){
+            mTimer.cancel();
+            mTimer = null;
+        }
     }
 
     @Override
@@ -224,6 +240,8 @@ public class LongPollService extends Service {
                                             .setAction(USER_WRITES_LP_ACTION)
                                             .putExtra(USER_WRITES_USER_ID_KEY,myArray.getString(1))
                             );
+                            cancelTimer(myArray.getString(1));
+                            setTimer(myArray.getString(1));
                             break;
                     }
                 }
@@ -236,6 +254,30 @@ public class LongPollService extends Service {
         }
 
     }
+
+    private void setTimer(final String userId){
+        // Установка таймера
+        TimerTask timerTask = new TimerTask() {
+            @Override
+            public void run() {
+                sendBroadcast(new Intent()
+                        .setAction(USER_STOP_WRITES_LP_ACTION)
+                        .putExtra(USER_STOP_WRITES_USER_ID_KEY, userId));
+            }
+        };
+        mTimer.schedule(timerTask,DELAY);
+        mTimerTaskHashMap.put(userId,timerTask);
+    }
+
+    private void cancelTimer(String userId){
+        // Сброс таймера
+        TimerTask timerTask = mTimerTaskHashMap.get(userId);
+        if (timerTask!=null){
+            timerTask.cancel();
+        }
+
+    }
+
 
     public class AsyncTaskLoader extends AsyncTask<VKJsonOperation,Void,Void>{
 
