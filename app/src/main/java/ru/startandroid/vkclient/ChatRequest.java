@@ -11,9 +11,6 @@ import org.json.JSONObject;
 
 import java.util.LinkedList;
 
-import ru.startandroid.vkclient.ChatAdapter;
-import ru.startandroid.vkclient.ChatMessage;
-
 /**
  * Запрос на получение истории сообщений данного пользователя
  */
@@ -54,8 +51,6 @@ public class ChatRequest {
                     e.printStackTrace();
                 }
                 mChatAdapter.notifyDataSetChanged();
-
-
             }
         });
     }
