@@ -16,7 +16,7 @@ import java.util.LinkedList;
 import ru.startandroid.vkclient.activities.MainActivity;
 
 /**
- * Запрос на получение истории сообщений данного пользователя
+ * Запрос на получение истории сообщений, отправки сообщений и пометки сообщений прочитанными
  */
 public class ChatRequest {
 
@@ -82,13 +82,13 @@ public class ChatRequest {
             @Override
             public void attemptFailed(VKRequest request, int attemptNumber, int totalAttempts) {
                 super.attemptFailed(request, attemptNumber, totalAttempts);
-                Toast.makeText(mContext, "Сообщение не отправлено", Toast.LENGTH_SHORT).show();
+                Toast.makeText(mContext, R.string.messageNotSend, Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onError(VKError error) {
                 super.onError(error);
-                Toast.makeText(mContext,"Сообщение не отправлено",Toast.LENGTH_SHORT).show();
+                Toast.makeText(mContext,R.string.messageNotSend,Toast.LENGTH_SHORT).show();
             }
         });
     }

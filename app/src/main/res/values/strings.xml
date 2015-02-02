@@ -7,5 +7,10 @@
     <string name="action_gcm_on">GCM ON</string>
     <string name="action_gcm_off">GCM OFF</string>
     <string name="empty">Друзей нет</string>
+    <string name="messages">Сообщения</string>
+    <string name="friends">Друзья</string>
+    <string name="userWrites">Пользователь набирает сообщение...</string>
+    <string name="button_send">Отправить</string>
+    <string name="messageNotSend">Сообщение не отправлено</string>
 
 </resources>

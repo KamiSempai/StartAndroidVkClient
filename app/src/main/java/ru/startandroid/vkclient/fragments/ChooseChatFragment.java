@@ -15,7 +15,7 @@ import ru.startandroid.vkclient.R;
 /**
  * Created by pc on 26.01.2015.
  */
-public class FragmentListMessages extends Fragment implements View.OnClickListener{
+public class ChooseChatFragment extends Fragment implements View.OnClickListener{
 
     Button mChatButton;
     EditText mChatEditText;

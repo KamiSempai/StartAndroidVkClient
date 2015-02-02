@@ -2,7 +2,6 @@ package ru.startandroid.vkclient.activities;
 
 
 import android.content.Intent;
-
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
@@ -11,39 +10,72 @@ import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import com.vk.sdk.VKSdk;
 import com.vk.sdk.VKUIHelper;
+import ru.startandroid.vkclient.fragments.ChooseChatFragment;
 import ru.startandroid.vkclient.gcm.GCM;
 import ru.startandroid.vkclient.gcm.LongPollConnection;
 import ru.startandroid.vkclient.MainActivityMessagesListener;
 import ru.startandroid.vkclient.R;
 import ru.startandroid.vkclient.fragments.ChatFragment;
-import ru.startandroid.vkclient.fragments.FragmentListMessages;
 import ru.startandroid.vkclient.fragments.FriendsFragment;
+import ru.startandroid.vkclient.gcm.LongPollService;
 
 
 public class MainActivity extends ActionBarActivity implements MainActivityMessagesListener,ActionBar.OnNavigationListener {
 
-    // Broacast сервису LongPoolService на уничтожение при закрытии MainActivity
-    public static final String DESTROY_SERVICE_ACTION = "ru.startandroid.vkclient.DESTROY_SERVICE";
     public static final String LOG_TAG = "myLogs";
-    String[] mSpinnerNames = new String[] { "Сообщения", "Друзья" };
+    final String CURRENT_FRAGMENT_KEY = "CURRENT_FRAGMENT_KEY";
+    final String CURRENT_USER_ID_KEY = "CURRENT_USER_ID_KEY";
+    final int CHOOSE_CHAT_FRAGMENT = 0;
+    final int FRIENDS_FRAGMENT = 1;
+    final int CHAT_FRAGMENT = 2;
+    int mCurrentFragment;
+    String[] mSpinnerNames;
     GCM mGcm;
-    private FragmentListMessages mFragmentListMessages;
+    private ChooseChatFragment mChooseChatFragment;
     private FriendsFragment mFriendsFragment;
+    private String mUserId;
+    private boolean restoreState;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        VKUIHelper.onCreate(this);
         setContentView(R.layout.activity_main);
+        mSpinnerNames = new String[] { getString(R.string.messages), getString(R.string.friends) };
+        VKUIHelper.onCreate(this);
         this.setTitle("");
         mFriendsFragment = new FriendsFragment();
-        mFragmentListMessages = new FragmentListMessages();
-        setFragmentListMessages();
+        mChooseChatFragment = new ChooseChatFragment();
+        if(savedInstanceState == null){
+            setFragmentListMessages();
+        }else if(savedInstanceState!=null && savedInstanceState.containsKey(CURRENT_FRAGMENT_KEY)){
+            if(savedInstanceState.getInt(CURRENT_FRAGMENT_KEY) == CHOOSE_CHAT_FRAGMENT){
+                setFragmentListMessages();
+            }else if(savedInstanceState.getInt(CURRENT_FRAGMENT_KEY) == FRIENDS_FRAGMENT){
+                setFragmentListFriends();
+            }else if(savedInstanceState.getInt(CURRENT_FRAGMENT_KEY) == CHAT_FRAGMENT
+                    && savedInstanceState.containsKey(CURRENT_USER_ID_KEY)){
+                setChatFragment(savedInstanceState.getString(CURRENT_USER_ID_KEY));
+            }
+
+        }
         setActionBarSpinner();
         mGcm = new GCM(this);
-        new LongPollConnection(this).connect();// Запуск LongPoolService
+        new LongPollConnection(this).connect();// Запуск LongPollService
 
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        restoreState = true;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle saveInstanceState) {
+        super.onSaveInstanceState(saveInstanceState);
+        saveInstanceState.putInt(CURRENT_FRAGMENT_KEY,mCurrentFragment);
+        saveInstanceState.putString(CURRENT_USER_ID_KEY,mUserId);
     }
 
     private void logout(){
@@ -63,7 +95,7 @@ public class MainActivity extends ActionBarActivity implements MainActivityMessa
     protected void onDestroy() {
         super.onDestroy();
         VKUIHelper.onDestroy(this);
-        sendBroadcast(new Intent().setAction(DESTROY_SERVICE_ACTION));
+        sendBroadcast(new Intent().setAction(LongPollService.DESTROY_SERVICE_ACTION));
     }
 
     @Override
@@ -104,35 +136,39 @@ public class MainActivity extends ActionBarActivity implements MainActivityMessa
 
     @Override
     public void eventFromFragmentListMessages(String id) {
-        // Ставим фрагмент с чатом(времмено)
+        // Ставим фрагмент с чатом(временно)
         setChatFragment(id);
     }
 
     private void setFragmentListFriends(){
-
         if (mFriendsFragment.isAdded())
             return;
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.container, mFriendsFragment)
                 .commit();
+        mCurrentFragment = FRIENDS_FRAGMENT;
     }
 
     private void setFragmentListMessages(){
-        if (mFragmentListMessages.isAdded())
+        if (mChooseChatFragment.isAdded())
             return;
         getSupportFragmentManager()
                 .beginTransaction()
-                .replace(R.id.container, mFragmentListMessages)
+                .replace(R.id.container, mChooseChatFragment)
                 .commit();
+        mCurrentFragment = CHOOSE_CHAT_FRAGMENT;
     }
 
     private void setChatFragment(String id){
-        ChatFragment chatFragment = new ChatFragment(id);
+        ChatFragment chatFragment = new ChatFragment();
+        chatFragment.setUserId(id);
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.container, chatFragment)
                 .commit();
+        mCurrentFragment = CHAT_FRAGMENT;
+        mUserId = id;
     }
 
     private void setActionBarSpinner(){
@@ -143,18 +179,17 @@ public class MainActivity extends ActionBarActivity implements MainActivityMessa
                 android.R.layout.simple_spinner_item, mSpinnerNames);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         bar.setListNavigationCallbacks(adapter, this);
+
     }
 
     @Override
     public boolean onNavigationItemSelected(int i, long l) {
-        switch (i){
-            case 0:
-                setFragmentListMessages();
-                break;
-            case 1:
-                setFragmentListFriends();
-                break;
+        if (i == 0 && !restoreState){
+            setFragmentListMessages();
+        }else if (i == 1 && !restoreState){
+            setFragmentListFriends();
         }
+        restoreState = false;
         return false;
     }
 

@@ -48,7 +48,7 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Отправить"
+            android:text="@string/button_send"
             android:id="@+id/bt_chat_send"
             android:background="#B0E2FF" />
 

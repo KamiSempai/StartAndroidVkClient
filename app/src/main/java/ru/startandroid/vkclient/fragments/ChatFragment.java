@@ -15,7 +15,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 import java.util.LinkedList;
 import java.util.ListIterator;
-import ru.startandroid.vkclient.ChatTimer;
 import ru.startandroid.vkclient.gcm.LongPollService;
 import ru.startandroid.vkclient.R;
 import ru.startandroid.vkclient.ChatAdapter;
@@ -27,7 +26,6 @@ import ru.startandroid.vkclient.ChatRequest;
  */
 public class ChatFragment extends Fragment implements View.OnClickListener {
 
-    ChatTimer mChatTimer;
     ChatRequest mChatRequest;
     ChatAdapter mChatAdapter;
     BroadcastReceiver mBroadcastReceiver;
@@ -40,16 +38,12 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
     final int UNREAD = 1;
     final int OUTBOX = 2;
     final String CHAT_SIZE = "50";
-    final String USER_WRITES = "Пользователь набирает сообщение...";
 
-    public ChatFragment(String userId){
-        mUserId = userId;
-        mMessageArray = new LinkedList<>();
-    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mMessageArray = new LinkedList<>();
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -59,9 +53,10 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
                 } else if (intent.getAction().equals(LongPollService.USER_WRITES_LP_ACTION) // Пользователь набирает текст(LongPollService)
                         && intent.getStringExtra(LongPollService.USER_WRITES_USER_ID_KEY).equals(mUserId)) {
                     onReceiveUserWrites();
-                } else if (intent.getAction().equals(ChatTimer.ERASE_TEXT_VIEW_USER_WRITES)) { // 5 секунд прошло, стираем надпись"Пользователь набирает сообщение..."(ChatTimer)
-                    onReceiveEraseUserWrites();
-                } else if (intent.getAction().equals(LongPollService.READ_INPUT_MESSAGES_LP_ACTION) // Входящие сообщения прочитаны(LongPollService)
+                } else if (intent.getAction().equals(LongPollService.USER_STOP_WRITES_LP_ACTION) // Пользователь набирает текст(LongPollService)
+                        && intent.getStringExtra(LongPollService.USER_STOP_WRITES_USER_ID_KEY).equals(mUserId)) {
+                    onReceiveUserStopWrites();
+                }else if (intent.getAction().equals(LongPollService.READ_INPUT_MESSAGES_LP_ACTION) // Входящие сообщения прочитаны(LongPollService)
                         && intent.getStringExtra(LongPollService.USER_ID_INPUT_MESSAGE_KEY).equals(mUserId)) {
                     onReceiveInputRead(intent);
                 } else if (intent.getAction().equals(LongPollService.READ_OUTPUT_MESSAGES_LP_ACTION) // Исходящие сообщения прочитаны(LongPollService)
@@ -73,7 +68,7 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(LongPollService.NEW_MESSAGE_LP_ACTION);
         intentFilter.addAction(LongPollService.USER_WRITES_LP_ACTION);
-        intentFilter.addAction(ChatTimer.ERASE_TEXT_VIEW_USER_WRITES);
+        intentFilter.addAction(LongPollService.USER_STOP_WRITES_LP_ACTION);
         intentFilter.addAction(LongPollService.READ_INPUT_MESSAGES_LP_ACTION);
         intentFilter.addAction(LongPollService.READ_OUTPUT_MESSAGES_LP_ACTION);
         getActivity().registerReceiver(mBroadcastReceiver,intentFilter);
@@ -100,7 +95,6 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
         mChatRequest = new ChatRequest(getActivity(),mUserId,CHAT_SIZE,mMessageArray,mChatAdapter);
         mChatRequest.downloadMessageHistory();
         mListView.setAdapter(mChatAdapter);
-        mChatTimer = new ChatTimer(getActivity());
     }
 
     @Override
@@ -114,7 +108,6 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
     public void onDestroy() {
         super.onDestroy();
         getActivity().unregisterReceiver(mBroadcastReceiver);
-        mChatTimer.release();
     }
 
     private void onReceiveNewMessage(Intent intent){
@@ -133,15 +126,12 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
     }
 
     private void onReceiveUserWrites(){
-        // Пользователь начал набирать сообщение. Ставим соответствующий текст,
-        // отменяем предыдущий таймер и ставим на 5 секунд новый
-        mTextViewUserWrites.setText(USER_WRITES);
-        mChatTimer.cancel();
-        mChatTimer.start();
+        // По сигналу от LongPollService ставим надпись "Пользователь набирает сообщение..."
+        mTextViewUserWrites.setText(R.string.userWrites);
     }
 
-    private void onReceiveEraseUserWrites(){
-        // По прошествии 5-ти секунд после сигнала о том, что пользователь начал печатать стираем TextView
+    private void onReceiveUserStopWrites(){
+        // По сигналу от LongPollService стираем надпись "Пользователь набирает сообщение..."
         mTextViewUserWrites.setText("");
     }
 
@@ -175,6 +165,10 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
             }
         }
         mChatAdapter.notifyDataSetChanged();
+    }
+
+    public void setUserId(String userId){
+        mUserId = userId;
     }
 
 }
