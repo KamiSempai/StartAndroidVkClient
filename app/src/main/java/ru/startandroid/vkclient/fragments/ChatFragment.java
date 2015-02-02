@@ -12,14 +12,11 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.Toast;
-import com.vk.sdk.api.VKApiConst;
-import com.vk.sdk.api.VKError;
-import com.vk.sdk.api.VKParameters;
-import com.vk.sdk.api.VKRequest;
-import com.vk.sdk.api.VKResponse;
+import android.widget.TextView;
 import java.util.LinkedList;
-import ru.startandroid.vkclient.gcm.LongPoolService;
+import java.util.ListIterator;
+import ru.startandroid.vkclient.ChatTimer;
+import ru.startandroid.vkclient.gcm.LongPollService;
 import ru.startandroid.vkclient.R;
 import ru.startandroid.vkclient.ChatAdapter;
 import ru.startandroid.vkclient.ChatMessage;
@@ -30,16 +27,20 @@ import ru.startandroid.vkclient.ChatRequest;
  */
 public class ChatFragment extends Fragment implements View.OnClickListener {
 
-    BroadcastReceiver mBroadcastReceiver;
+    ChatTimer mChatTimer;
+    ChatRequest mChatRequest;
     ChatAdapter mChatAdapter;
+    BroadcastReceiver mBroadcastReceiver;
     LinkedList<ChatMessage> mMessageArray;
     ListView mListView;
-    Button mButton;
+    Button mButtonSend;
     EditText mEditText;
-    String mUserId,mMessage;
+    TextView mTextViewUserWrites;
+    String mUserId;
     final int UNREAD = 1;
     final int OUTBOX = 2;
     final String CHAT_SIZE = "50";
+    final String USER_WRITES = "Пользователь набирает сообщение...";
 
     public ChatFragment(String userId){
         mUserId = userId;
@@ -50,26 +51,31 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mBroadcastReceiver = new BroadcastReceiver() {
-            // Ловим broadcast от LongPoolService с сообщением, добавляем к списку и обновляем ListView
             @Override
             public void onReceive(Context context, Intent intent) {
-               if (intent.getAction().equals(LongPoolService.NEW_MESSAGE_SERVICE_ACTION)
-                        && intent.getStringExtra(LongPoolService.NEW_MESSAGE_USER_ID_KEY).equals(mUserId)){
-               mMessageArray.add(new ChatMessage()
-                           .setReadState((intent.getIntExtra(LongPoolService.NEW_MESSAGE_FLAG_KEY,0)&UNREAD)!=UNREAD)// Проверка флага - прочитанное/не прочитанное
-                           .setOut((intent.getIntExtra(LongPoolService.NEW_MESSAGE_FLAG_KEY,0)&OUTBOX)==OUTBOX)// Проверка флага - входящее/исходящее
-                           .setId(Integer.valueOf(intent.getStringExtra(LongPoolService.NEW_MESSAGE_MESSAGE_ID)))// id
-                           .setBody(intent.getStringExtra(LongPoolService.NEW_MESSAGE_TEXT_KEY)));// текст
-                mChatAdapter.notifyDataSetChanged();
-                mListView.smoothScrollToPosition(100500);
-
-               }
-
-
+                if (intent.getAction().equals(LongPollService.NEW_MESSAGE_LP_ACTION) //Получение нового сообщения(LongPollService)
+                        && intent.getStringExtra(LongPollService.NEW_MESSAGE_USER_ID_KEY).equals(mUserId)) {
+                    onReceiveNewMessage(intent);
+                } else if (intent.getAction().equals(LongPollService.USER_WRITES_LP_ACTION) // Пользователь набирает текст(LongPollService)
+                        && intent.getStringExtra(LongPollService.USER_WRITES_USER_ID_KEY).equals(mUserId)) {
+                    onReceiveUserWrites();
+                } else if (intent.getAction().equals(ChatTimer.ERASE_TEXT_VIEW_USER_WRITES)) { // 5 секунд прошло, стираем надпись"Пользователь набирает сообщение..."(ChatTimer)
+                    onReceiveEraseUserWrites();
+                } else if (intent.getAction().equals(LongPollService.READ_INPUT_MESSAGES_LP_ACTION) // Входящие сообщения прочитаны(LongPollService)
+                        && intent.getStringExtra(LongPollService.USER_ID_INPUT_MESSAGE_KEY).equals(mUserId)) {
+                    onReceiveInputRead(intent);
+                } else if (intent.getAction().equals(LongPollService.READ_OUTPUT_MESSAGES_LP_ACTION) // Исходящие сообщения прочитаны(LongPollService)
+                        && intent.getStringExtra(LongPollService.USER_ID_OUTPUT_MESSAGE_KEY).equals(mUserId) ) {
+                    onReceiveOutputRead(intent);
+                }
             }
         };
         IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(LongPoolService.NEW_MESSAGE_SERVICE_ACTION);
+        intentFilter.addAction(LongPollService.NEW_MESSAGE_LP_ACTION);
+        intentFilter.addAction(LongPollService.USER_WRITES_LP_ACTION);
+        intentFilter.addAction(ChatTimer.ERASE_TEXT_VIEW_USER_WRITES);
+        intentFilter.addAction(LongPollService.READ_INPUT_MESSAGES_LP_ACTION);
+        intentFilter.addAction(LongPollService.READ_OUTPUT_MESSAGES_LP_ACTION);
         getActivity().registerReceiver(mBroadcastReceiver,intentFilter);
     }
 
@@ -78,9 +84,10 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
         View view = inflater.inflate(R.layout.chat_fragment, null);
         mListView = (ListView) view.findViewById(R.id.lw_chat);
         mListView.setStackFromBottom(true);
-        mButton = (Button) view.findViewById(R.id.bt_chat);
-        mButton.setOnClickListener(this);
+        mButtonSend = (Button) view.findViewById(R.id.bt_chat_send);
+        mButtonSend.setOnClickListener(this);
         mEditText = (EditText) view.findViewById(R.id.et_chat);
+        mTextViewUserWrites = (TextView) view.findViewById(R.id.tw_chat_text_writes);
 
         return view;
     }
@@ -90,43 +97,84 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
         super.onActivityCreated(savedInstanceState);
         // Создаем адаптер, ставим его и отравляем запрос на историю сообщений
         mChatAdapter = new ChatAdapter(getActivity(),mMessageArray,R.layout.item_chat,R.id.tw_item_chat);
-        new ChatRequest(mUserId,CHAT_SIZE,mMessageArray,mChatAdapter).execute();
+        mChatRequest = new ChatRequest(getActivity(),mUserId,CHAT_SIZE,mMessageArray,mChatAdapter);
+        mChatRequest.downloadMessageHistory();
         mListView.setAdapter(mChatAdapter);
+        mChatTimer = new ChatTimer(getActivity());
     }
 
     @Override
     public void onClick(View v) {
-        // Отправить
-        mMessage = mEditText.getText().toString();
-        VKRequest vkRequest = new VKRequest("messages.send", VKParameters.from(VKApiConst.USER_ID,mUserId,VKApiConst.MESSAGE,mMessage));
-        vkRequest.executeWithListener(new VKRequest.VKRequestListener() {
-            @Override
-            public void onComplete(VKResponse response) {
-                super.onComplete(response);
-                // Тут пока ничего не пишем, сигнал о том, что сообщение отправлено, придет из LongPoolService в onReceive
-                // Там сообщение и добавим к списку
-            }
-
-            @Override
-            public void attemptFailed(VKRequest request, int attemptNumber, int totalAttempts) {
-                super.attemptFailed(request, attemptNumber, totalAttempts);
-                Toast.makeText(getActivity(),"Сообщение не отправлено",Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onError(VKError error) {
-                super.onError(error);
-                Toast.makeText(getActivity(),"Сообщение не отправлено",Toast.LENGTH_SHORT).show();
-            }
-        });
+        // Отправка сообщения по нажатии на кнопку "Отправить"
+        mChatRequest.sendMessage(mEditText.getText().toString());
         mEditText.setText("");
-
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         getActivity().unregisterReceiver(mBroadcastReceiver);
+        mChatTimer.release();
+    }
+
+    private void onReceiveNewMessage(Intent intent){
+        // Обработка broadcast с новым сообщением
+        // Создание нового объекта ChatMessage, добавление в массив и обновление ListView
+        mMessageArray.add(new ChatMessage()
+                .setReadState((intent.getIntExtra(LongPollService.NEW_MESSAGE_FLAG_KEY,0)&UNREAD)!=UNREAD)// Проверка флага - прочитанное/не прочитанное
+                .setOut((intent.getIntExtra(LongPollService.NEW_MESSAGE_FLAG_KEY,0)&OUTBOX)==OUTBOX)// Проверка флага - входящее/исходящее
+                .setId(Integer.valueOf(intent.getStringExtra(LongPollService.NEW_MESSAGE_MESSAGE_ID)))// id
+                .setBody(intent.getStringExtra(LongPollService.NEW_MESSAGE_TEXT_KEY)));// текст
+        if (!((intent.getIntExtra(LongPollService.NEW_MESSAGE_FLAG_KEY,0)&OUTBOX)==OUTBOX)){ // Если сообщение входящее - помечаем как прочитанное
+            mChatRequest.sendMarkAsRead(Integer.valueOf(intent.getStringExtra(LongPollService.NEW_MESSAGE_MESSAGE_ID)));
+        }
+        mChatAdapter.notifyDataSetChanged();
+        mListView.smoothScrollToPosition(100500);
+    }
+
+    private void onReceiveUserWrites(){
+        // Пользователь начал набирать сообщение. Ставим соответствующий текст,
+        // отменяем предыдущий таймер и ставим на 5 секунд новый
+        mTextViewUserWrites.setText(USER_WRITES);
+        mChatTimer.cancel();
+        mChatTimer.start();
+    }
+
+    private void onReceiveEraseUserWrites(){
+        // По прошествии 5-ти секунд после сигнала о том, что пользователь начал печатать стираем TextView
+        mTextViewUserWrites.setText("");
+    }
+
+    private void onReceiveInputRead(Intent intent){
+        // Получаем сигнал из LongPollService о прочтении входящих сообщений
+        // Проверяем все объекты ChatMessage из массива mMessageArray с id ниже указанного(localId) и с пометкой "входящие"(isOut() == false)
+        // меняем поле read на true и перезагружаем ListView
+        ListIterator<ChatMessage> iterator = mMessageArray.listIterator();
+        int localId = Integer.valueOf(intent.getStringExtra(LongPollService.LOCAL_ID_INPUT_MESSAGE_KEY));
+        while (iterator.hasNext()){
+            ChatMessage message = iterator.next();
+            if (!message.isRead() && !message.isOut() && message.getId() <= localId){
+                message.setReadState(true);
+                iterator.set(message);
+            }
+        }
+        mChatAdapter.notifyDataSetChanged();
+    }
+
+    private void onReceiveOutputRead(Intent intent){
+        // Получаем сигнал из LongPollService о прочтении исходящих сообщений
+        // Проверяем все объекты ChatMessage из массива mMessageArray с id ниже указанного(localId) и с пометкой "исходящие"(isOut() == true)
+        // меняем поле read на true и перезагружаем ListView
+        int localId = Integer.valueOf(intent.getStringExtra(LongPollService.LOCAL_ID_OUTPUT_MESSAGE_KEY));
+        ListIterator<ChatMessage> iterator = mMessageArray.listIterator();
+        while (iterator.hasNext()){
+            ChatMessage message = iterator.next();
+            if (!message.isRead() && message.isOut() && message.getId() <= localId){
+                 message.setReadState(true);
+                 iterator.set(message);
+            }
+        }
+        mChatAdapter.notifyDataSetChanged();
     }
 
 }

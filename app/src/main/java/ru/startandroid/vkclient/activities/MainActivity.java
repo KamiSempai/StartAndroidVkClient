@@ -6,17 +6,13 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
-
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ArrayAdapter;
-
 import com.vk.sdk.VKSdk;
 import com.vk.sdk.VKUIHelper;
-
-
 import ru.startandroid.vkclient.gcm.GCM;
-import ru.startandroid.vkclient.gcm.LongPoolConnection;
+import ru.startandroid.vkclient.gcm.LongPollConnection;
 import ru.startandroid.vkclient.MainActivityMessagesListener;
 import ru.startandroid.vkclient.R;
 import ru.startandroid.vkclient.fragments.ChatFragment;
@@ -46,7 +42,7 @@ public class MainActivity extends ActionBarActivity implements MainActivityMessa
         setFragmentListMessages();
         setActionBarSpinner();
         mGcm = new GCM(this);
-        new LongPoolConnection(this).connect();// Запуск LongPoolService
+        new LongPollConnection(this).connect();// Запуск LongPoolService
 
     }
 

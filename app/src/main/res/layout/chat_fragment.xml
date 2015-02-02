@@ -11,8 +11,24 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
+        android:background="#FFFFFF"
+        android:layout_above="@+id/linearLayout2" />
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="25dp"
         android:layout_above="@+id/linearLayout"
-        android:background="#FFFFFF" />
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:id="@+id/linearLayout2">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/tw_chat_text_writes"
+            android:gravity="center|left" />
+    </LinearLayout>
 
     <LinearLayout
         android:orientation="horizontal"
@@ -33,7 +49,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Отправить"
-            android:id="@+id/bt_chat"
+            android:id="@+id/bt_chat_send"
             android:background="#B0E2FF" />
 
 
