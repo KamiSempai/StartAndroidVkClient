@@ -3,11 +3,16 @@ package ru.startandroid.vkclient.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import com.vk.sdk.VKSdk;
 import com.vk.sdk.VKUIHelper;
 import ru.startandroid.vkclient.fragments.ChooseChatFragment;
@@ -20,7 +25,7 @@ import ru.startandroid.vkclient.fragments.FriendsFragment;
 import ru.startandroid.vkclient.gcm.LongPollService;
 
 
-public class MainActivity extends ActionBarActivity implements MainActivityMessagesListener,ActionBar.OnNavigationListener {
+public class MainActivity extends ActionBarActivity implements MainActivityMessagesListener {
 
     public static final String LOG_TAG = "myLogs";
     final String CURRENT_FRAGMENT_KEY = "CURRENT_FRAGMENT_KEY";
@@ -29,47 +34,65 @@ public class MainActivity extends ActionBarActivity implements MainActivityMessa
     final int FRIENDS_FRAGMENT = 1;
     final int CHAT_FRAGMENT = 2;
     int mCurrentFragment;
-    String[] mSpinnerNames;
     GCM mGcm;
     private ChooseChatFragment mChooseChatFragment;
     private FriendsFragment mFriendsFragment;
     private String mUserId;
-    private boolean restoreState;
+    private DrawerLayout mDrawerLayout;
+    private Toolbar mToolbar;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mSpinnerNames = new String[] { getString(R.string.messages), getString(R.string.friends) };
         VKUIHelper.onCreate(this);
         this.setTitle("");
         mFriendsFragment = new FriendsFragment();
         mChooseChatFragment = new ChooseChatFragment();
         if(savedInstanceState == null){
-            setFragmentListMessages();
+            setChooseChatFragment();
         }else if(savedInstanceState!=null && savedInstanceState.containsKey(CURRENT_FRAGMENT_KEY)){
             if(savedInstanceState.getInt(CURRENT_FRAGMENT_KEY) == CHOOSE_CHAT_FRAGMENT){
-                setFragmentListMessages();
+                setChooseChatFragment();
             }else if(savedInstanceState.getInt(CURRENT_FRAGMENT_KEY) == FRIENDS_FRAGMENT){
-                setFragmentListFriends();
+                setFriendsFragment();
             }else if(savedInstanceState.getInt(CURRENT_FRAGMENT_KEY) == CHAT_FRAGMENT
                     && savedInstanceState.containsKey(CURRENT_USER_ID_KEY)){
                 setChatFragment(savedInstanceState.getString(CURRENT_USER_ID_KEY));
             }
 
         }
-        setActionBarSpinner();
         mGcm = new GCM(this);
         new LongPollConnection(this).connect();// Запуск LongPollService
+        // Toolbar и Navigation Drawer
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(mToolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_drawer);
+        String[] mDrawerArray = getResources().getStringArray(R.array.drawer_array);
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerLayout.setDrawerListener(new ActionBarDrawerToggle(this,mDrawerLayout,mToolbar,R.string.nd_open,R.string.nd_close ));
+        ListView mDrawerListView = (ListView) findViewById(R.id.left_drawer);
+        mDrawerListView.setAdapter(new ArrayAdapter<String>(this,
+                R.layout.drawer_list_item, mDrawerArray));
+        mDrawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                switch (position){
+                    case 0:
+                        setChooseChatFragment();
+                        mDrawerLayout.closeDrawers();
+                        break;
+                    case 1:
+                        setFriendsFragment();
+                        mDrawerLayout.closeDrawers();
+                        break;
+                }
+            }
+        });
+  }
 
-    }
-
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        restoreState = true;
-    }
 
     @Override
     public void onSaveInstanceState(Bundle saveInstanceState) {
@@ -88,7 +111,6 @@ public class MainActivity extends ActionBarActivity implements MainActivityMessa
     protected void onResume() {
         super.onResume();
         VKUIHelper.onResume(this);
-
     }
 
     @Override
@@ -140,7 +162,7 @@ public class MainActivity extends ActionBarActivity implements MainActivityMessa
         setChatFragment(id);
     }
 
-    private void setFragmentListFriends(){
+    private void setFriendsFragment(){
         if (mFriendsFragment.isAdded())
             return;
         getSupportFragmentManager()
@@ -150,7 +172,7 @@ public class MainActivity extends ActionBarActivity implements MainActivityMessa
         mCurrentFragment = FRIENDS_FRAGMENT;
     }
 
-    private void setFragmentListMessages(){
+    private void setChooseChatFragment(){
         if (mChooseChatFragment.isAdded())
             return;
         getSupportFragmentManager()
@@ -171,27 +193,7 @@ public class MainActivity extends ActionBarActivity implements MainActivityMessa
         mUserId = id;
     }
 
-    private void setActionBarSpinner(){
-        //Установка выпадающего списка в ActionBar
-        ActionBar bar = getSupportActionBar();
-        bar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getSupportActionBar().getThemedContext(),
-                android.R.layout.simple_spinner_item, mSpinnerNames);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        bar.setListNavigationCallbacks(adapter, this);
 
-    }
-
-    @Override
-    public boolean onNavigationItemSelected(int i, long l) {
-        if (i == 0 && !restoreState){
-            setFragmentListMessages();
-        }else if (i == 1 && !restoreState){
-            setFragmentListFriends();
-        }
-        restoreState = false;
-        return false;
-    }
 
 
 }

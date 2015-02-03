@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <string-array name="drawer_array">
+        <item>Список чатов</item>
+        <item>Друзья</item>
+    </string-array>
+
     <string name="app_name">VK Client</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_logout">Logout</string>
@@ -12,5 +17,7 @@
     <string name="userWrites">Пользователь набирает сообщение...</string>
     <string name="button_send">Отправить</string>
     <string name="messageNotSend">Сообщение не отправлено</string>
+    <string name="nd_open">nd_open</string>
+    <string name="nd_close">nd_close</string>
 
 </resources>

@@ -18,7 +18,7 @@
         android:theme="@style/AppTheme" >
 
         <activity android:name="com.vk.sdk.VKOpenAuthActivity" />
-        <activity android:name=".friends.FriendsActivity"/>
+
         <activity android:name=".activities.MainActivity" />
 
         <activity
