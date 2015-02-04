@@ -1,7 +1,9 @@
 package ru.startandroid.vkclient;
 
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
+import android.widget.ListView;
 import android.widget.Toast;
 import com.vk.sdk.api.VKApiConst;
 import com.vk.sdk.api.VKError;
@@ -14,19 +16,23 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import ru.startandroid.vkclient.activities.MainActivity;
+import ru.startandroid.vkclient.fragments.ChatFragment;
 
 /**
  * Запрос на получение истории сообщений, отправки сообщений и пометки сообщений прочитанными
  */
 public class ChatRequest {
 
+    int mTotalMessageCount;
     String mUserId;
     String mCount;
     LinkedList<ChatMessage> mMessageArray;
     private ChatAdapter mChatAdapter;
     private Context mContext;
+    OnNewResponseListener listener; // Слушатель для отправки в ChatFragment сигнала об установке новых данных на ListView
 
-    public  ChatRequest (Context context,String userId,String count, LinkedList<ChatMessage> messageArray, ChatAdapter chatAdapter){
+    public  ChatRequest (Context context,OnNewResponseListener listener,String userId,String count, LinkedList<ChatMessage> messageArray, ChatAdapter chatAdapter){
+        this.listener = listener;
         mContext = context;
         mUserId = userId;
         mCount = count;
@@ -34,9 +40,9 @@ public class ChatRequest {
         mChatAdapter = chatAdapter;
     }
 
-    public void downloadMessageHistory(){
+    public void downloadMessageHistory(final int offset){
         // Отправляем запрос, в onComplete заполняем массив объектами ChatMessage
-        VKRequest vkRequest = new VKRequest("messages.getHistory", VKParameters.from(VKApiConst.USER_ID,mUserId,VKApiConst.COUNT,mCount));
+        VKRequest vkRequest = new VKRequest("messages.getHistory", VKParameters.from(VKApiConst.USER_ID,mUserId,VKApiConst.COUNT,mCount,VKApiConst.OFFSET,String.valueOf(offset)));
         vkRequest.executeWithListener(new VKRequest.VKRequestListener() {
             @Override
             public void onComplete(VKResponse response) {
@@ -44,17 +50,18 @@ public class ChatRequest {
                 try {
                     JSONObject jsonObjectResponse = response.json.getJSONObject("response");
                     JSONArray messageArray = jsonObjectResponse.getJSONArray("items");
+                    mTotalMessageCount = jsonObjectResponse.getInt("count");
                     ArrayList<Integer> unreadMessages = new ArrayList<Integer>();// Создаем массив для id непрочитанных сообщений, чтобы пометить их прочитанными
-                    for (int i=0; i<messageArray.length(); i++){
+                    for (int i=0; i<messageArray.length(); i++) {
                         JSONObject oneMessageObject = messageArray.getJSONObject(i);
-                        if(oneMessageObject.getInt("read_state")!=0){ // Если сообщение не прочитано, добавляем его id в unreadMessages
+                        if (oneMessageObject.getInt("read_state") != 0) { // Если сообщение не прочитано, добавляем его id в unreadMessages
                             unreadMessages.add(oneMessageObject.getInt("id"));
                         }
                         mMessageArray.addFirst(new ChatMessage()
                                 .setBody(oneMessageObject.getString("body"))
                                 .setId(oneMessageObject.getInt("id"))
-                                .setOut(oneMessageObject.getInt("out")!=0 ? true : false )
-                                .setReadState(oneMessageObject.getInt("read_state")!=0 ? true : false ));
+                                .setOut(oneMessageObject.getInt("out") != 0 ? true : false)
+                                .setReadState(oneMessageObject.getInt("read_state") != 0 ? true : false));
                     }
                     sendMarkAsRead(unreadMessages);
 
@@ -62,8 +69,19 @@ public class ChatRequest {
                     e.printStackTrace();
                 }
                 mChatAdapter.notifyDataSetChanged();
+                listener.onNewResponse(mTotalMessageCount);
+            }
 
+            @Override
+            public void attemptFailed(VKRequest request, int attemptNumber, int totalAttempts) {
+                super.attemptFailed(request, attemptNumber, totalAttempts);
+                listener.onNewResponse(mTotalMessageCount);
+            }
 
+            @Override
+            public void onError(VKError error) {
+                super.onError(error);
+                listener.onNewResponse(mTotalMessageCount);
             }
         });
     }
@@ -123,7 +141,15 @@ public class ChatRequest {
                 super.onError(error);
             }
         });
+
+
+
+
+
     }
+
+
+
 
 
 
