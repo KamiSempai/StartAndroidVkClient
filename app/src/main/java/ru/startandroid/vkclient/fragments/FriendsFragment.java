@@ -2,12 +2,12 @@ package ru.startandroid.vkclient.fragments;
 
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
+import android.widget.ListView;
 
 import com.vk.sdk.api.VKError;
 import com.vk.sdk.api.VKRequest;
@@ -18,6 +18,7 @@ import com.vk.sdk.api.model.VKUsersArray;
 import java.util.ArrayList;
 import java.util.List;
 
+import ru.startandroid.vkclient.MainActivityMessagesListener;
 import ru.startandroid.vkclient.R;
 import ru.startandroid.vkclient.friends.FriendsAdapter;
 import ru.startandroid.vkclient.friends.FriendsRequest;
@@ -29,11 +30,15 @@ import ru.startandroid.vkclient.friends.GeneralFriendsFields;
  */
 
 public class FriendsFragment extends ListFragment {
+
+    public static final String id = "ID";
+
     private List<VKApiUserFull> mFriendsArray = new ArrayList<>(20);
     private FriendsAdapter mFriendsAdapter;
     private int mOffset;
     private int mStep;
     private Boolean mIsAllUsersDownloaded = false;
+    private MainActivityMessagesListener mMainActivityMessagesListener;
 
 
     public FriendsFragment(){
@@ -71,10 +76,19 @@ public class FriendsFragment extends ListFragment {
                     mOffset += 20;
                     friendsRequest.executeWithListener(new VKFriendsRequest(mFriendsAdapter, mFriendsArray), mOffset, mStep);
                     mFriendsAdapter.setIsUpdatedData(false);
-                    Log.d("Total Item Count", " " + totalItemCount);
                 }
             }
         });
+    }
+
+    @Override
+    public void onListItemClick(ListView l, View v, int position, long id) {
+        super.onListItemClick(l, v, position, id);
+        Bundle bundle = new Bundle();
+        ChatFragment chatFragment = new ChatFragment();
+        bundle.putString(FriendsFragment.id, Integer.toString(((VKApiUserFull) l.getItemAtPosition(position)).id));
+        chatFragment.setArguments(bundle);
+        getFragmentManager().beginTransaction().replace(R.id.container, chatFragment).commit();
     }
 
     @Override

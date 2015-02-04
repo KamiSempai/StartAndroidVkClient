@@ -13,13 +13,15 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
+
 import java.util.LinkedList;
 import java.util.ListIterator;
-import ru.startandroid.vkclient.gcm.LongPollService;
-import ru.startandroid.vkclient.R;
+
 import ru.startandroid.vkclient.ChatAdapter;
 import ru.startandroid.vkclient.ChatMessage;
 import ru.startandroid.vkclient.ChatRequest;
+import ru.startandroid.vkclient.R;
+import ru.startandroid.vkclient.gcm.LongPollService;
 
 /**
  * Фрагмент с чатом
@@ -90,6 +92,7 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        mUserId = getArguments().getString(FriendsFragment.id);
         // Создаем адаптер, ставим его и отравляем запрос на историю сообщений
         mChatAdapter = new ChatAdapter(getActivity(),mMessageArray,R.layout.item_chat,R.id.tw_item_chat);
         mChatRequest = new ChatRequest(getActivity(),mUserId,CHAT_SIZE,mMessageArray,mChatAdapter);
