@@ -6,11 +6,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 
+import com.squareup.picasso.Picasso;
 import com.vk.sdk.api.model.VKApiUserFull;
 
 import java.util.List;
-
-import ru.startandroid.vkclient.R;
 
 /**
  * @author Samofal Vitaliy
@@ -34,7 +33,8 @@ public class FriendsAdapter extends ArrayAdapter<VKApiUserFull> {
             friendsViewHolder = new FriendsViewHolder(view);
             view.setTag(friendsViewHolder);
         }
-        friendsViewHolder.getAvatar().setImageResource(R.drawable.ic_launcher);
+        Picasso.with(getContext()).load(currentFriend.photo_100).into(friendsViewHolder.getAvatar());
+        //friendsViewHolder.getAvatar().setImageResource(R.drawable.ic_launcher);
         friendsViewHolder.getFirstLastNames().setText(currentFriend.first_name + " " + currentFriend.last_name);
         friendsViewHolder.getOnline().setText(currentFriend.online ? "ON" : "OFF");
         friendsViewHolder.getOnline().setTextColor(currentFriend.online ? Color.GREEN : Color.RED);
