@@ -9,14 +9,19 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import java.util.LinkedList;
 import java.util.ListIterator;
+
+import ru.startandroid.vkclient.AutoHideableLayout;
+import ru.startandroid.vkclient.OnNewResponseListener;
 import ru.startandroid.vkclient.gcm.LongPollService;
 import ru.startandroid.vkclient.R;
+
 import ru.startandroid.vkclient.ChatAdapter;
 import ru.startandroid.vkclient.ChatMessage;
 import ru.startandroid.vkclient.ChatRequest;
@@ -24,7 +29,7 @@ import ru.startandroid.vkclient.ChatRequest;
 /**
  * Фрагмент с чатом
  */
-public class ChatFragment extends Fragment implements View.OnClickListener {
+public class ChatFragment extends Fragment implements View.OnClickListener, OnNewResponseListener {
 
     ChatRequest mChatRequest;
     ChatAdapter mChatAdapter;
@@ -37,12 +42,17 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
     String mUserId;
     final int UNREAD = 1;
     final int OUTBOX = 2;
-    final String CHAT_SIZE = "50";
+    public static final String CHAT_SIZE = "50";
+    int totalMessageCount; // общее колличество сообщений в диалоге
+    int totalDownloadedMessageCount; // колличество загруженных сообщений
+    boolean onScrollState; // Будучи false не дает отправить новый запрос на новые сообщения(onScroll срабатывает несколько раз на одной позиции)
 
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        totalMessageCount = 0;
+        onScrollState = false;
         mMessageArray = new LinkedList<>();
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
@@ -63,6 +73,7 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
                         && intent.getStringExtra(LongPollService.USER_ID_OUTPUT_MESSAGE_KEY).equals(mUserId) ) {
                     onReceiveOutputRead(intent);
                 }
+
             }
         };
         IntentFilter intentFilter = new IntentFilter();
@@ -77,8 +88,32 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,  Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.chat_fragment, null);
+        AutoHideableLayout lll = (AutoHideableLayout) view.findViewById(R.id.myLay); // Кнопка с анимацией, по нажатии ставим фрагмент с друзьями( будет с сообщениями когда доделают)
+        lll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FriendsFragment friendsFragment = new FriendsFragment();
+                getFragmentManager().beginTransaction().replace(R.id.container, friendsFragment).commit();
+            }
+        });
         mListView = (ListView) view.findViewById(R.id.lw_chat);
         mListView.setStackFromBottom(true);
+        mListView.setOnTouchListener(lll);
+        mListView.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                if (firstVisibleItem == 0 && onScrollState && totalDownloadedMessageCount < totalMessageCount){
+                    onScrollState = false;
+                    mChatRequest.downloadMessageHistory(totalItemCount);
+                }
+
+            }
+        });
         mButtonSend = (Button) view.findViewById(R.id.bt_chat_send);
         mButtonSend.setOnClickListener(this);
         mEditText = (EditText) view.findViewById(R.id.et_chat);
@@ -90,11 +125,13 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        mUserId = getArguments().getString(FriendsFragment.id);
         // Создаем адаптер, ставим его и отравляем запрос на историю сообщений
         mChatAdapter = new ChatAdapter(getActivity(),mMessageArray,R.layout.item_chat,R.id.tw_item_chat);
-        mChatRequest = new ChatRequest(getActivity(),mUserId,CHAT_SIZE,mMessageArray,mChatAdapter);
-        mChatRequest.downloadMessageHistory();
         mListView.setAdapter(mChatAdapter);
+        mChatRequest = new ChatRequest(getActivity(),this,mUserId,CHAT_SIZE,mMessageArray,mChatAdapter);
+        mChatRequest.downloadMessageHistory(totalDownloadedMessageCount);
+
     }
 
     @Override
@@ -160,15 +197,25 @@ public class ChatFragment extends Fragment implements View.OnClickListener {
         while (iterator.hasNext()){
             ChatMessage message = iterator.next();
             if (!message.isRead() && message.isOut() && message.getId() <= localId){
-                 message.setReadState(true);
-                 iterator.set(message);
+                message.setReadState(true);
+                iterator.set(message);
             }
         }
         mChatAdapter.notifyDataSetChanged();
     }
 
+
     public void setUserId(String userId){
         mUserId = userId;
     }
 
+
+    @Override
+    public void onNewResponse(int totalMessageCount) {
+        this.totalMessageCount = totalMessageCount;
+        totalDownloadedMessageCount = mMessageArray.size();
+        onScrollState = true;
+        mListView.setSelection(Integer.valueOf(CHAT_SIZE));
+        //mListView.removeFooterView(header);
+    }
 }
