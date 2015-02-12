@@ -1,6 +1,7 @@
 package ru.startandroid.vkclient.activities;
 
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -23,6 +24,9 @@ import ru.startandroid.vkclient.R;
 import ru.startandroid.vkclient.fragments.ChatFragment;
 import ru.startandroid.vkclient.fragments.FriendsFragment;
 import ru.startandroid.vkclient.gcm.LongPollService;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.widget.Toast;
 
 
 public class MainActivity extends ActionBarActivity implements MainActivityMessagesListener {
@@ -45,7 +49,12 @@ public class MainActivity extends ActionBarActivity implements MainActivityMessa
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if(!isConnect(getBaseContext())) {
+            Toast.makeText(this, "Нет подключения к сети", Toast.LENGTH_LONG).show();
+            finish();
+        }
         setContentView(R.layout.activity_main);
+
         VKUIHelper.onCreate(this);
         this.setTitle("");
         mFriendsFragment = new FriendsFragment();
@@ -93,6 +102,19 @@ public class MainActivity extends ActionBarActivity implements MainActivityMessa
         });
   }
 
+
+    private boolean isConnect(Context c) {
+
+        final ConnectivityManager connMgr = (ConnectivityManager) c.getSystemService(c.CONNECTIVITY_SERVICE);
+        NetworkInfo nInfo = connMgr.getActiveNetworkInfo();
+        final android.net.NetworkInfo wifi = connMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        final android.net.NetworkInfo mobile = connMgr.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+
+        if ( nInfo != null && nInfo.isConnected())
+            return true;
+
+        return false;
+    }
 
     @Override
     public void onSaveInstanceState(Bundle saveInstanceState) {
