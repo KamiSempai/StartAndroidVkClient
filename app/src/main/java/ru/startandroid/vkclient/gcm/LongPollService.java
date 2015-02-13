@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.os.IBinder;
+
 import com.vk.sdk.api.VKError;
 import com.vk.sdk.api.httpClient.VKJsonOperation;
 import org.apache.http.client.methods.HttpGet;
@@ -16,8 +17,6 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import ru.startandroid.vkclient.activities.MainActivity;
 
 
 /**
@@ -161,7 +160,7 @@ public class LongPollService extends Service {
     }
 
     private void connectAfterError(){
-        new LongPollConnection(this).connect();
+        LongPollConnection.connect(this);
     }
 
     private void asyncStart(VKJsonOperation op){
