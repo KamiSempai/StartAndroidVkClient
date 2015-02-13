@@ -1,4 +1,4 @@
-package ru.startandroid.vkclient.friends;
+package ru.startandroid.vkclient;
 
 import android.view.View;
 import android.widget.ImageView;

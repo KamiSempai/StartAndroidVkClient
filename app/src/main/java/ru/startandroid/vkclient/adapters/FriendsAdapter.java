@@ -1,4 +1,4 @@
-package ru.startandroid.vkclient.friends;
+package ru.startandroid.vkclient.adapters;
 
 import android.content.Context;
 import android.graphics.Color;
@@ -10,6 +10,8 @@ import com.squareup.picasso.Picasso;
 import com.vk.sdk.api.model.VKApiUserFull;
 
 import java.util.List;
+
+import ru.startandroid.vkclient.FriendsViewHolder;
 
 /**
  * @author Samofal Vitaliy

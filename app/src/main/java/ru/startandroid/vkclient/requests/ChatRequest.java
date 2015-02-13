@@ -1,9 +1,7 @@
-package ru.startandroid.vkclient;
+package ru.startandroid.vkclient.requests;
 
 import android.content.Context;
-import android.content.Intent;
 import android.util.Log;
-import android.widget.ListView;
 import android.widget.Toast;
 import com.vk.sdk.api.VKApiConst;
 import com.vk.sdk.api.VKError;
@@ -15,8 +13,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.LinkedList;
-import ru.startandroid.vkclient.activities.MainActivity;
-import ru.startandroid.vkclient.fragments.ChatFragment;
+import ru.startandroid.vkclient.ChatMessage;
+import ru.startandroid.vkclient.R;
+import ru.startandroid.vkclient.UI.MainActivity;
+import ru.startandroid.vkclient.adapters.ChatAdapter;
 
 /**
  * Запрос на получение истории сообщений, отправки сообщений и пометки сообщений прочитанными
@@ -40,8 +40,8 @@ public class ChatRequest {
         mChatAdapter = chatAdapter;
     }
 
-    public void downloadMessageHistory(final int offset){
-        // Отправляем запрос, в onComplete заполняем массив объектами ChatMessage
+    public void downloadMessages(final int offset){
+        // Отправляем запрос на сообщения чата, в onComplete заполняем массив mMessageArray объектами ChatMessage
         VKRequest vkRequest = new VKRequest("messages.getHistory", VKParameters.from(VKApiConst.USER_ID,mUserId,VKApiConst.COUNT,mCount,VKApiConst.OFFSET,String.valueOf(offset)));
         vkRequest.executeWithListener(new VKRequest.VKRequestListener() {
             @Override
@@ -141,14 +141,12 @@ public class ChatRequest {
                 super.onError(error);
             }
         });
-
-
-
-
-
     }
 
 
+    public interface OnNewResponseListener{
+        public void onNewResponse(int totalMessageCount);
+    }
 
 
 

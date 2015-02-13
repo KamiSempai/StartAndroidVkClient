@@ -1,4 +1,4 @@
-package ru.startandroid.vkclient.fragments;
+package ru.startandroid.vkclient.UI;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -8,8 +8,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-
-import ru.startandroid.vkclient.MainActivityMessagesListener;
 import ru.startandroid.vkclient.R;
 
 /**
@@ -19,12 +17,16 @@ public class ChooseChatFragment extends Fragment implements View.OnClickListener
 
     Button mChatButton;
     EditText mChatEditText;
-    MainActivityMessagesListener mMainActivityMessagesListener;
+    ChooseChatFragmentListener mChooseChatFragmentListener;
 
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        mMainActivityMessagesListener = (MainActivityMessagesListener) activity;
+        if (activity instanceof ChooseChatFragmentListener){
+            mChooseChatFragmentListener = (ChooseChatFragmentListener) activity;
+        }else{
+            throw new IllegalArgumentException("Activity should implement ChooseChatFragmentListener");
+        }
     }
 
     @Override
@@ -38,6 +40,12 @@ public class ChooseChatFragment extends Fragment implements View.OnClickListener
 
     @Override
     public void onClick(View v) {
-        mMainActivityMessagesListener.eventFromFragmentListMessages(mChatEditText.getText().toString());
+        mChooseChatFragmentListener.eventFromFragmentListMessages(mChatEditText.getText().toString());
     }
+
+    public interface ChooseChatFragmentListener{
+        public void eventFromFragmentListMessages(String id);
+    }
+
+
 }

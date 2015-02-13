@@ -1,4 +1,4 @@
-package ru.startandroid.vkclient.broadcast_receivers;
+package ru.startandroid.vkclient.gcm;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -16,7 +16,7 @@ import com.vk.sdk.api.VKResponse;
 
 import org.json.JSONException;
 
-import ru.startandroid.vkclient.activities.MainActivity;
+import ru.startandroid.vkclient.UI.MainActivity;
 import ru.startandroid.vkclient.R;
 
 /**

@@ -1,4 +1,4 @@
-package ru.startandroid.vkclient.friends;
+package ru.startandroid.vkclient;
 
 /**
  * @author Samofal Vitaliy

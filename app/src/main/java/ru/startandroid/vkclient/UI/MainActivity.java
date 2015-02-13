@@ -1,4 +1,4 @@
-package ru.startandroid.vkclient.activities;
+package ru.startandroid.vkclient.UI;
 
 
 import android.content.Context;
@@ -16,20 +16,16 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import com.vk.sdk.VKSdk;
 import com.vk.sdk.VKUIHelper;
-import ru.startandroid.vkclient.fragments.ChooseChatFragment;
 import ru.startandroid.vkclient.gcm.GCM;
 import ru.startandroid.vkclient.gcm.LongPollConnection;
-import ru.startandroid.vkclient.MainActivityMessagesListener;
 import ru.startandroid.vkclient.R;
-import ru.startandroid.vkclient.fragments.ChatFragment;
-import ru.startandroid.vkclient.fragments.FriendsFragment;
 import ru.startandroid.vkclient.gcm.LongPollService;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.widget.Toast;
 
 
-public class MainActivity extends ActionBarActivity implements MainActivityMessagesListener {
+public class MainActivity extends ActionBarActivity implements ChooseChatFragment.ChooseChatFragmentListener {
 
     public static final String LOG_TAG = "myLogs";
     final String CURRENT_FRAGMENT_KEY = "CURRENT_FRAGMENT_KEY";
@@ -73,7 +69,7 @@ public class MainActivity extends ActionBarActivity implements MainActivityMessa
 
         }
         mGcm = new GCM(this);
-        new LongPollConnection(this).connect();// Запуск LongPollService
+        LongPollConnection.connect(this);// Запуск LongPollService
         // Toolbar и Navigation Drawer
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);

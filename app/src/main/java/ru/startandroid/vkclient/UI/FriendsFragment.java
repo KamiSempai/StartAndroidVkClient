@@ -1,4 +1,4 @@
-package ru.startandroid.vkclient.fragments;
+package ru.startandroid.vkclient.UI;
 
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
@@ -14,15 +14,12 @@ import com.vk.sdk.api.VKRequest;
 import com.vk.sdk.api.VKResponse;
 import com.vk.sdk.api.model.VKApiUserFull;
 import com.vk.sdk.api.model.VKUsersArray;
-
 import java.util.ArrayList;
 import java.util.List;
-
-import ru.startandroid.vkclient.MainActivityMessagesListener;
 import ru.startandroid.vkclient.R;
-import ru.startandroid.vkclient.friends.FriendsAdapter;
-import ru.startandroid.vkclient.friends.FriendsRequest;
-import ru.startandroid.vkclient.friends.GeneralFriendsFields;
+import ru.startandroid.vkclient.adapters.FriendsAdapter;
+import ru.startandroid.vkclient.requests.FriendsRequest;
+import ru.startandroid.vkclient.GeneralFriendsFields;
 
 /**
  * @author Samofal Vitaliy
@@ -38,7 +35,7 @@ public class FriendsFragment extends ListFragment {
     private int mOffset;
     private int mStep;
     private Boolean mIsAllUsersDownloaded = false;
-    private MainActivityMessagesListener mMainActivityMessagesListener;
+
 
 
     public FriendsFragment(){

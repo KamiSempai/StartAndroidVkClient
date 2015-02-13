@@ -1,9 +1,11 @@
-package ru.startandroid.vkclient.friends;
+package ru.startandroid.vkclient.requests;
 
 import com.vk.sdk.api.VKApi;
 import com.vk.sdk.api.VKApiConst;
 import com.vk.sdk.api.VKParameters;
 import com.vk.sdk.api.VKRequest;
+
+import ru.startandroid.vkclient.GeneralFriendsFields;
 
 /**
  * @author Samofal Vitaliy

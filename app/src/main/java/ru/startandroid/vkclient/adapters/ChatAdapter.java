@@ -1,4 +1,4 @@
-package ru.startandroid.vkclient;
+package ru.startandroid.vkclient.adapters;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -13,6 +13,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.LinkedList;
+
+import ru.startandroid.vkclient.ChatMessage;
+import ru.startandroid.vkclient.R;
 
 /**
  * Адаптер для ListView ChatFragment

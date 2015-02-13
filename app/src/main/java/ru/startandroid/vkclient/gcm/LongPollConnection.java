@@ -2,7 +2,6 @@ package ru.startandroid.vkclient.gcm;
 
 import android.content.Context;
 import android.content.Intent;
-
 import com.vk.sdk.api.VKError;
 import com.vk.sdk.api.VKRequest;
 import com.vk.sdk.api.VKResponse;
@@ -14,15 +13,12 @@ public class LongPollConnection {
 
     public static final String START_SERVICE_ACTION = "ru.startandroid.vkclient.START_SERVICE_ACTION";
 
-    Context mContext;
+    static Context mContext;
 
-    public LongPollConnection(Context context){
-        mContext = context;
-    }
-
-    public void connect(){
+    public static void connect(Context context){
         // Отправка запроса на данные для подключения к LongPool серверу
         // По получении запускаем LongPollService и передаем ему данные
+        mContext = context;
         VKRequest request = new VKRequest("messages.getLongPollServer", null);
         request.executeWithListener(new VKRequest.VKRequestListener() {
             @Override

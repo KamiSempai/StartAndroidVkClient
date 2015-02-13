@@ -18,7 +18,7 @@ import com.vk.sdk.api.VKResponse;
 
 import java.io.IOException;
 
-import ru.startandroid.vkclient.activities.MainActivity;
+import ru.startandroid.vkclient.UI.MainActivity;
 
 
 /**
