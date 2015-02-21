@@ -1,5 +1,6 @@
 package ru.startandroid.vkclient.UI;
 
+import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -10,8 +11,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import java.util.LinkedList;
@@ -32,12 +33,11 @@ public class ChatFragment extends Fragment implements View.OnClickListener, Chat
     BroadcastReceiver mBroadcastReceiver;
     LinkedList<ChatMessage> mMessageArray;
     ListView mListView;
-    Button mButtonSend;
     EditText mEditText;
     TextView mTextViewUserWrites;
+    ImageView mAttachmentImageView,mSendImageView;
+    Dialog mDialog;
     String mUserId;
-    final int UNREAD = 1;
-    final int OUTBOX = 2;
     public static final String CHAT_SIZE = "50";
     int totalMessageCount; // общее колличество сообщений в диалоге
     int totalDownloadedMessageCount; // колличество загруженных сообщений
@@ -102,8 +102,10 @@ public class ChatFragment extends Fragment implements View.OnClickListener, Chat
 
             }
         });
-        mButtonSend = (Button) view.findViewById(R.id.bt_chat_send);
-        mButtonSend.setOnClickListener(this);
+        mSendImageView = (ImageView) view.findViewById(R.id.sendImageView);
+        mSendImageView.setOnClickListener(this);
+        mAttachmentImageView = (ImageView) view.findViewById(R.id.attachmentImageView);
+        mAttachmentImageView.setOnClickListener(this);
         mEditText = (EditText) view.findViewById(R.id.et_chat);
         mTextViewUserWrites = (TextView) view.findViewById(R.id.tw_chat_text_writes);
 
@@ -113,9 +115,9 @@ public class ChatFragment extends Fragment implements View.OnClickListener, Chat
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mUserId = getArguments().getString(FriendsFragment.id);
+        // mUserId = getArguments().getString(FriendsFragment.id);
         // Создаем адаптер, ставим его и отравляем запрос на первые 50 сообщений
-        mChatAdapter = new ChatAdapter(getActivity(),mMessageArray,R.layout.item_chat,R.id.tw_item_chat);
+        mChatAdapter = new ChatAdapter(getActivity(),mMessageArray,R.layout.item_chat,2);
         mListView.setAdapter(mChatAdapter);
         mChatRequest = new ChatRequest(getActivity(),this,mUserId,CHAT_SIZE,mMessageArray,mChatAdapter);
         mChatRequest.downloadMessages(totalDownloadedMessageCount);
@@ -124,9 +126,19 @@ public class ChatFragment extends Fragment implements View.OnClickListener, Chat
 
     @Override
     public void onClick(View v) {
-        // Отправка сообщения по нажатии на кнопку "Отправить"
-        mChatRequest.sendMessage(mEditText.getText().toString());
-        mEditText.setText("");
+        // Обработка нажатий на imageView отправки сообщения и прикреплений.
+        switch (v.getId()){
+            case R.id.sendImageView:
+                mChatRequest.sendMessage(mEditText.getText().toString());
+                mEditText.setText("");
+                break;
+            case R.id.attachmentImageView:
+                mDialog = new Dialog(getActivity());
+                mDialog.setTitle(R.string.choose_file);
+                mDialog.setContentView(R.layout.attachment_dialog);
+                mDialog.show();
+        }
+
     }
 
     @Override
@@ -138,16 +150,7 @@ public class ChatFragment extends Fragment implements View.OnClickListener, Chat
     private void onReceiveNewMessage(Intent intent){
         // Обработка broadcast с новым сообщением
         // Создание нового объекта ChatMessage, добавление в массив и обновление ListView
-        mMessageArray.add(new ChatMessage()
-                .setReadState((intent.getIntExtra(LongPollService.NEW_MESSAGE_FLAG_KEY,0)&UNREAD)!=UNREAD)// Проверка флага - прочитанное/не прочитанное
-                .setOut((intent.getIntExtra(LongPollService.NEW_MESSAGE_FLAG_KEY,0)&OUTBOX)==OUTBOX)// Проверка флага - входящее/исходящее
-                .setId(Integer.valueOf(intent.getStringExtra(LongPollService.NEW_MESSAGE_MESSAGE_ID)))// id
-                .setBody(intent.getStringExtra(LongPollService.NEW_MESSAGE_TEXT_KEY)));// текст
-        if (!((intent.getIntExtra(LongPollService.NEW_MESSAGE_FLAG_KEY,0)&OUTBOX)==OUTBOX)){ // Если сообщение входящее - помечаем как прочитанное
-            mChatRequest.sendMarkAsRead(Integer.valueOf(intent.getStringExtra(LongPollService.NEW_MESSAGE_MESSAGE_ID)));
-        }
-        mChatAdapter.notifyDataSetChanged();
-        mListView.smoothScrollToPosition(100500);
+        mChatRequest.downloadOneMessage(intent.getStringExtra(LongPollService.NEW_MESSAGE_MESSAGE_ID));
     }
 
     private void onReceiveUserWrites(){
@@ -192,19 +195,24 @@ public class ChatFragment extends Fragment implements View.OnClickListener, Chat
         mChatAdapter.notifyDataSetChanged();
     }
 
-
     public void setUserId(String userId){
         mUserId = userId;
     }
 
-
     @Override
-    public void onNewResponse(int totalMessageCount) {
-        // Новые сообщения подгружены
+    public void onNewMessagesResponse(int totalMessageCount) {
+        // Новые сообщения подгружены(ChatRequest)
         // Меняем переменные и опускаем ListView на 50 пунктов вниз
         this.totalMessageCount = totalMessageCount;
         totalDownloadedMessageCount = mMessageArray.size();
         onScrollState = true;
         mListView.setSelection(Integer.valueOf(CHAT_SIZE));
     }
+
+    @Override
+    public void onNewMessageResponse() {
+        // Новое сообщение добавлено(ChatRequest)
+        mListView.setSelection(100500);
+    }
+
 }

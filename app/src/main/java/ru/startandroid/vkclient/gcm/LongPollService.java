@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.os.IBinder;
-
 import com.vk.sdk.api.VKError;
 import com.vk.sdk.api.httpClient.VKJsonOperation;
 import org.apache.http.client.methods.HttpGet;
@@ -20,7 +19,7 @@ import java.util.TimerTask;
 
 
 /**
- * Created by pc on 24.01.2015.
+ * Сервис для соединения с LongPoll-сервером
  */
 public class LongPollService extends Service {
 
@@ -41,6 +40,7 @@ public class LongPollService extends Service {
     public static final String NEW_MESSAGE_FLAG_KEY = "NEW_MESSAGE_FLAG_KEY";
     public static final String NEW_MESSAGE_MESSAGE_ID = "NEW_MESSAGE_MESSAGE_ID ";
     public static final String NEW_MESSAGE_TEXT_KEY = "NEW_MESSAGE_TEXT_KEY";
+    public static final String NEW_MESSAGE_ATTACHMENTS_KEY = "NEW_MESSAGE_ATTACHMENTS_KEY";
     // USER_ONLINE_LP_ACTION
     public static final String USER_ONLINE_USER_ID_KEY = "USER_ONLINE_USER_ID_KEY";
     // USER_OFFLINE_LP_ACTION
@@ -185,12 +185,14 @@ public class LongPollService extends Service {
                             // Массив вида [4,$message_id,$flags,$from_id,$timestamp,$subject,$text,$attachments]
                             // Добавление нового сообщения - 8 элементов
                             // Берем 2-й(id сообщения), 3-й(флаги), 4-й(id отправителя) и 7-й(текст сообщения) и отправляем
+
                             sendBroadcast(new Intent()
-                                    .setAction(NEW_MESSAGE_LP_ACTION)
-                                    .putExtra(NEW_MESSAGE_MESSAGE_ID,myArray.getString(1))
-                                    .putExtra(NEW_MESSAGE_FLAG_KEY,Integer.valueOf(myArray.getString(2)))
-                                    .putExtra(NEW_MESSAGE_USER_ID_KEY,myArray.getString(3))
-                                    .putExtra(NEW_MESSAGE_TEXT_KEY,myArray.getString(6))
+                                            .setAction(NEW_MESSAGE_LP_ACTION)
+                                            .putExtra(NEW_MESSAGE_MESSAGE_ID, myArray.getString(1))
+                                            .putExtra(NEW_MESSAGE_FLAG_KEY, Integer.valueOf(myArray.getString(2)))
+                                            .putExtra(NEW_MESSAGE_USER_ID_KEY, myArray.getString(3))
+                                            .putExtra(NEW_MESSAGE_TEXT_KEY, myArray.getString(6))
+                                            .putExtra(NEW_MESSAGE_ATTACHMENTS_KEY,myArray.getString(7))
                             );
                             break;
                         case 6:
