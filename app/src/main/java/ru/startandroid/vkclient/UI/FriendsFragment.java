@@ -122,10 +122,11 @@ public class FriendsFragment extends ListFragment {
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
-        Bundle bundle = new Bundle();
+        //Bundle bundle = new Bundle();
         ChatFragment chatFragment = new ChatFragment();
-        bundle.putString(FriendsFragment.id, Integer.toString(((VKApiUserFull) l.getItemAtPosition(position)).id));
-        chatFragment.setArguments(bundle);
+        chatFragment.setUserId(String.valueOf(((VKApiUserFull)l.getItemAtPosition(position)).id));
+        //bundle.putString(FriendsFragment.id, Integer.toString(((VKApiUserFull) l.getItemAtPosition(position)).id));
+        //chatFragment.setArguments(bundle);
         getFragmentManager().beginTransaction().replace(R.id.container, chatFragment).commit();
     }
 

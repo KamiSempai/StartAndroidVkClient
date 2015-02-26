@@ -17,7 +17,7 @@
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="fill_parent"
-        android:layout_height="25dp"
+        android:layout_height="wrap_content"
         android:layout_above="@+id/linearLayout"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
@@ -27,7 +27,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:id="@+id/tw_chat_text_writes"
-            android:gravity="center|left" />
+            android:gravity="center|left"
+            android:background="#fff" />
     </LinearLayout>
 
     <LinearLayout
@@ -39,18 +40,23 @@
         android:id="@+id/linearLayout">
 
 
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:id="@+id/attachmentImageView"
+            android:background="@drawable/round_clip" />
+
         <EditText
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/et_chat"
             android:layout_weight="1" />
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/button_send"
-            android:id="@+id/bt_chat_send"
-            android:background="#B0E2FF" />
+        <ImageView
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:id="@+id/sendImageView"
+            android:background="@drawable/send" />
 
 
     </LinearLayout>

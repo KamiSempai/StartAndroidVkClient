@@ -18,6 +18,7 @@
     <string name="button_send">Отправить</string>
     <string name="messageNotSend">Сообщение не отправлено</string>
     <string name="nd_open">nd_open</string>
+    <string name="choose_file">Выберите тип файла</string>
     <string name="nd_close">nd_close</string>
 
 </resources>
