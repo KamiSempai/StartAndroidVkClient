@@ -1,12 +1,17 @@
 package ru.startandroid.vkclient.UI;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
+import android.util.Log;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import com.vk.sdk.api.VKError;
@@ -14,12 +19,12 @@ import com.vk.sdk.api.VKRequest;
 import com.vk.sdk.api.VKResponse;
 import com.vk.sdk.api.model.VKApiUserFull;
 import com.vk.sdk.api.model.VKUsersArray;
-import java.util.ArrayList;
-import java.util.List;
+
+import ru.startandroid.vkclient.GeneralFriendsFields;
 import ru.startandroid.vkclient.R;
 import ru.startandroid.vkclient.adapters.FriendsAdapter;
+import ru.startandroid.vkclient.gcm.LongPollService;
 import ru.startandroid.vkclient.requests.FriendsRequest;
-import ru.startandroid.vkclient.GeneralFriendsFields;
 
 /**
  * @author Samofal Vitaliy
@@ -30,12 +35,16 @@ public class FriendsFragment extends ListFragment {
 
     public static final String id = "ID";
 
-    private List<VKApiUserFull> mFriendsArray = new ArrayList<>(20);
+//    private List<VKApiUserFull> mFriendsArray = new ArrayList<>(20);
+    private SparseArray<VKApiUserFull> mFriendsArray = new SparseArray<>(20);
+//    private FriendsAdapter mFriendsAdapter;
     private FriendsAdapter mFriendsAdapter;
+    private BroadcastReceiver mBroadcastReceiver;
+
     private int mOffset;
     private int mStep;
     private Boolean mIsAllUsersDownloaded = false;
-
+    private int mQuantityOfAllUser = 0;
 
 
     public FriendsFragment(){
@@ -47,12 +56,41 @@ public class FriendsFragment extends ListFragment {
     }
 
     @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (intent.getAction().equals(LongPollService.USER_ONLINE_LP_ACTION)) {
+                    mFriendsAdapter.setOnline(Integer.parseInt(intent.getStringExtra(LongPollService.USER_ONLINE_USER_ID_KEY)),true);
+                }
+                if(intent.getAction().equals(LongPollService.USER_OFFLINE_LP_ACTION)){
+                    mFriendsAdapter.setOnline(Integer.parseInt(intent.getStringExtra(LongPollService.USER_OFFLINE_USER_ID_KEY)),false);
+                }
+
+
+            }
+        };
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(LongPollService.USER_ONLINE_LP_ACTION);
+        intentFilter.addAction(LongPollService.USER_OFFLINE_LP_ACTION);
+
+        getActivity().registerReceiver(mBroadcastReceiver,intentFilter);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        getActivity().unregisterReceiver(mBroadcastReceiver);
+    }
+
+    @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mFriendsAdapter = new FriendsAdapter(getActivity(), R.layout.friends_list, R.id.first_last_name, mFriendsArray);
+        mFriendsAdapter = new FriendsAdapter(getActivity(), mFriendsArray, R.layout.friends_list);
 
         final FriendsRequest friendsRequest = new FriendsRequest(GeneralFriendsFields.FIRSTNAME_LASTNAME_ICON_ONLINE, mOffset, mStep);
-        friendsRequest.executeWithListener(new VKFriendsRequest(mFriendsAdapter, mFriendsArray));
+        friendsRequest.executeWithListener(new VKFriendsRequestListener());
         getActivity().onRetainNonConfigurationInstance();
         setListAdapter(mFriendsAdapter);
 
@@ -65,18 +103,21 @@ public class FriendsFragment extends ListFragment {
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
                 if (totalItemCount != 0 &&
                         mFriendsAdapter.isUpdatedData() &&
-                        !mIsAllUsersDownloaded &&
                         (firstVisibleItem + visibleItemCount) == totalItemCount) {
-                    int diffOfCount = (mFriendsAdapter.getCountOfAllUsers() - (mOffset + mStep));
+                    int diffOfCount = (mQuantityOfAllUser - (mOffset + mStep));
                     mStep = diffOfCount < 20 ? diffOfCount : mStep;
                     mIsAllUsersDownloaded = diffOfCount <= 0;
                     mOffset += 20;
-                    friendsRequest.executeWithListener(new VKFriendsRequest(mFriendsAdapter, mFriendsArray), mOffset, mStep);
-                    mFriendsAdapter.setIsUpdatedData(false);
+                    friendsRequest.executeWithListener(new VKFriendsRequestListener(), mOffset, mStep);
+                    mFriendsAdapter.setUpdatedData(false);
+
                 }
+
             }
         });
-    }
+        }
+
+
 
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
@@ -93,23 +134,20 @@ public class FriendsFragment extends ListFragment {
         return inflater.inflate(R.layout.friends_fragment, container, false);
     }
 
-    public static class VKFriendsRequest extends VKRequest.VKRequestListener {
-        private List<VKApiUserFull> mFriendsArray;
-        private FriendsAdapter mFriendsAdapter;
+    public class VKFriendsRequestListener extends VKRequest.VKRequestListener {
 
-        public VKFriendsRequest(ArrayAdapter friendsAdapter, List<VKApiUserFull> friendsArray) {
-            this.mFriendsArray = friendsArray;
-            this.mFriendsAdapter = (FriendsAdapter) friendsAdapter;
+
+        public VKFriendsRequestListener() {
+            super();
         }
 
         @Override
         public void onComplete(VKResponse response) {
             super.onComplete(response);
-            mFriendsAdapter.setCountOfAllUsers(((VKUsersArray) response.parsedModel).getCount());
+            mQuantityOfAllUser = ((VKUsersArray) response.parsedModel).getCount();
             for (VKApiUserFull currentUser : (VKUsersArray) response.parsedModel) {
-                mFriendsArray.add(currentUser);
+                mFriendsAdapter.addItem(currentUser);
             }
-            mFriendsAdapter.setIsUpdatedData(true);
             mFriendsAdapter.notifyDataSetChanged();
         }
 
