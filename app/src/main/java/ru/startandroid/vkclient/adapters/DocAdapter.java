@@ -25,6 +25,7 @@ public class DocAdapter extends BaseAdapter implements View.OnClickListener{
 
 
 
+
     public DocAdapter(Activity activity, ArrayList<Map<String,String>> docList){
         mDocList = docList;
         mContext = activity.getApplicationContext();
