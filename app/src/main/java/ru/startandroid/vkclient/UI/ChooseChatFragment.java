@@ -25,7 +25,7 @@ public class ChooseChatFragment extends Fragment implements View.OnClickListener
         if (activity instanceof ChooseChatFragmentListener){
             mChooseChatFragmentListener = (ChooseChatFragmentListener) activity;
         }else{
-            throw new IllegalArgumentException("Activity should implement ChooseChatFragmentListener");
+            throw new IllegalArgumentException("MainActivity should implement ChooseChatFragmentListener");
         }
     }
 

@@ -3,6 +3,7 @@ package ru.startandroid.vkclient.requests;
 import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
+import com.vk.sdk.VKSdk;
 import com.vk.sdk.api.VKApiConst;
 import com.vk.sdk.api.VKError;
 import com.vk.sdk.api.VKParameters;
@@ -165,6 +166,32 @@ public class ChatRequest {
         });
     }
 
+    public void sendMessage(String message,ArrayList<Map<String,Object>> attachmentList){
+        // Отправка сообщения
+        String attachments = createAttachmentsString(attachmentList);
+        VKRequest vkRequest = new VKRequest("messages.send", VKParameters.from(VKApiConst.USER_ID,mUserId,VKApiConst.MESSAGE,message,"attachment",attachments));
+        vkRequest.executeWithListener(new VKRequest.VKRequestListener() {
+            @Override
+            public void onComplete(VKResponse response) {
+                super.onComplete(response);
+            }
+
+            @Override
+            public void attemptFailed(VKRequest request, int attemptNumber, int totalAttempts) {
+                super.attemptFailed(request, attemptNumber, totalAttempts);
+                Toast.makeText(mContext, R.string.messageNotSend, Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onError(VKError error) {
+                super.onError(error);
+                Toast.makeText(mContext,R.string.messageNotSend,Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+
+
     public void sendMarkAsRead(int unreadMessage){
         sendMarkAsRead(String.valueOf(unreadMessage));
     }
@@ -238,6 +265,24 @@ public class ChatRequest {
         Collections.sort(attachments, new MapComparator()); // Сортировка прикреплений
 
         return attachments;
+    }
+
+    private String createAttachmentsString(ArrayList<Map<String,Object>> attachmentList ){
+        String result = "";
+        for (int i = 0; i < attachmentList.size(); i++){
+            Map<String,Object> oneAttachmentMap = attachmentList.get(i);
+            String type = (String) oneAttachmentMap.get("type");
+            String userId = VKSdk.getAccessToken().userId;
+            String attachmentId = (String) oneAttachmentMap.get("id");
+            String oneAttachmentString = type + userId + "_" + attachmentId;
+
+            if (i < attachmentList.size() - 1){
+                oneAttachmentString += ",";
+            }
+            result += oneAttachmentString;
+        }
+
+        return result;
     }
 
 

@@ -1,11 +1,7 @@
 package ru.startandroid.vkclient.adapters;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Color;
-import android.os.Build;
-import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -154,7 +150,7 @@ public class ChatAdapter extends BaseAdapter {
         return view;
     }
 
-    private String byteToString(String size){
+    public static String byteToString(String size){
         // Перевод размера документа из байтов в строку
         String stringSize = "";
         double doubleSize = Long.valueOf(size);
@@ -174,7 +170,7 @@ public class ChatAdapter extends BaseAdapter {
         // Метод вызывается, когда список urlArrayList заполнен urlами всех фотографий, прикрепленных к сообщению
         View photoView = mInflater.inflate(R.layout.photo_attach_layout, parent, false);
         GridView gridView = (GridView) photoView.findViewById(R.id.gridView);
-        gridView.setAdapter(new GridViewAdapter(mContext,urlArrayList));
+        gridView.setAdapter(new GridViewChatAdapter(mContext,urlArrayList));
         LinearLayout.LayoutParams par = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         par.weight=1;
         photoView.setLayoutParams(par);

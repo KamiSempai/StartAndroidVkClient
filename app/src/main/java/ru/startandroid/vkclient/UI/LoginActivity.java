@@ -19,7 +19,7 @@ import com.vk.sdk.dialogs.VKCaptchaDialog;
  */
 public class LoginActivity extends ActionBarActivity {
 
-    private static final String[] scope = {VKScope.MESSAGES,VKScope.FRIENDS};
+    private static final String[] scope = {VKScope.MESSAGES,VKScope.FRIENDS,VKScope.PHOTOS,VKScope.AUDIO,VKScope.DOCS};
     public static final String APP_ID = "4744765";
 
     @Override

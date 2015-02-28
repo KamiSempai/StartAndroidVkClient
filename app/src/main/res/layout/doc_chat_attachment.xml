@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="3dp">
+
+    <ImageView
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:id="@+id/itemDocAttachImageView"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:background="#DCDCDC" />
+
+    <ImageView
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:id="@+id/itemCancelDocAttachImageView"
+        android:background="@drawable/cancel"
+        android:layout_alignParentTop="true"
+        android:layout_alignRight="@+id/itemDocAttachImageView"
+        android:layout_alignEnd="@+id/itemDocAttachImageView" />
+
+    <TextView
+        android:layout_width="100dp"
+        android:layout_height="20dp"
+        android:text="Документ"
+        android:id="@+id/textView"
+        android:layout_alignBottom="@+id/itemCancelDocAttachImageView"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:layout_width="100dp"
+        android:layout_height="20dp"
+        android:text="New Text"
+        android:id="@+id/docTitleTextView"
+        android:layout_below="@+id/textView"
+        android:layout_alignRight="@+id/itemDocAttachImageView"
+        android:layout_alignEnd="@+id/itemDocAttachImageView"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="5dp" />
+
+    <TextView
+        android:layout_width="100dp"
+        android:layout_height="20dp"
+        android:text="New Text"
+        android:id="@+id/docSizeTextView"
+        android:layout_below="@+id/docTitleTextView"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="5dp" />
+
+</RelativeLayout>

@@ -6,20 +6,18 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
-
 import com.squareup.picasso.Picasso;
-
 import java.util.ArrayList;
 
 /**
  * Адаптер для GridView, в который подгружаются фотографии чата
  */
-public class GridViewAdapter extends BaseAdapter {
+public class GridViewChatAdapter extends BaseAdapter {
 
     Context mContext;
     private ArrayList<String> mUrlArray;
 
-    public GridViewAdapter(Context context, ArrayList<String> urlArray){
+    public GridViewChatAdapter(Context context, ArrayList<String> urlArray){
         mContext = context;
         mUrlArray = urlArray;
     }
@@ -46,7 +44,6 @@ public class GridViewAdapter extends BaseAdapter {
             imageView = new ImageView(mContext);
             imageView.setLayoutParams(new GridView.LayoutParams(150, 150));
             imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            imageView.setPadding(8, 8, 8, 8);
         } else {
             imageView = (ImageView) convertView;
         }
