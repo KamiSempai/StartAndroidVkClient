@@ -355,6 +355,7 @@ public class ChatFragment extends Fragment implements View.OnClickListener, Chat
                 attachment.put("view",view);
                 mAttachmentList.add(attachment);
                 break;
+
         }
     }
 
