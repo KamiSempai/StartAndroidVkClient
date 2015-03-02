@@ -4,22 +4,8 @@ package ru.startandroid.vkclient.UI;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarActivity;
-import android.support.v7.widget.Toolbar;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
 import com.vk.sdk.VKSdk;
 import com.vk.sdk.VKUIHelper;
-
-
-import ru.startandroid.vkclient.gcm.GCM;
 import ru.startandroid.vkclient.gcm.LongPollConnection;
 import ru.startandroid.vkclient.R;
 import ru.startandroid.vkclient.gcm.LongPollService;
@@ -28,14 +14,17 @@ import android.net.NetworkInfo;
 import android.widget.Toast;
 
 
-public class MainActivity extends NavigationDrawerActivity implements ChooseChatFragment.ChooseChatFragmentListener,ChatFragment.ChatFragmentListener {
+public class MainActivity extends NavigationDrawerActivity implements ChooseChatFragment.ChooseChatFragmentListener{
 
     public static final String LOG_TAG = "myLogs";
+    public static final String NAVIGATION_DRAWER_EVENT = "NAVIGATION_DRAWER_EVENT";
     final String CURRENT_FRAGMENT_KEY = "CURRENT_FRAGMENT_KEY";
     final String CURRENT_USER_ID_KEY = "CURRENT_USER_ID_KEY";
-    final int CHOOSE_CHAT_FRAGMENT = 0;
-    final int FRIENDS_FRAGMENT = 1;
-    final int CHAT_FRAGMENT = 2;
+    public static final int CHOOSE_CHAT_FRAGMENT = 0;
+    public static final int FRIENDS_FRAGMENT = 1;
+    public static final int CHAT_FRAGMENT = 2;
+    public static final int LOGOUT = 3;
+
     int mCurrentFragment;
     private ChooseChatFragment mChooseChatFragment;
     private FriendsFragment mFriendsFragment;
@@ -69,8 +58,23 @@ public class MainActivity extends NavigationDrawerActivity implements ChooseChat
 
         }
         LongPollConnection.connect(this);// Запуск LongPollService
-
   }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        switch (intent.getIntExtra(NAVIGATION_DRAWER_EVENT,0)){
+            case CHOOSE_CHAT_FRAGMENT:
+                setChooseChatFragment();
+                break;
+            case FRIENDS_FRAGMENT:
+                setFriendsFragment();
+                break;
+            case LOGOUT:
+                logout();
+                break;
+        }
+    }
 
     @Override
     public void onClickFriends() {
@@ -84,7 +88,7 @@ public class MainActivity extends NavigationDrawerActivity implements ChooseChat
         mDrawerLayout.closeDrawers();
     }
 
-    @Override
+
     public void logout() {
         VKSdk.logout();
         startActivity(new Intent(this, LoginActivity.class));
@@ -172,18 +176,10 @@ public class MainActivity extends NavigationDrawerActivity implements ChooseChat
     }
 
 
-    @Override
-    public void onChooseFriendsFragment() {
-        setFriendsFragment();
-    }
+
 
     @Override
-    public void onChooseChooseChatFragment() {
-        setChooseChatFragment();
-    }
-
-    @Override
-    public void onLogout() {
+    public void onClickLogout() {
         logout();
     }
 }

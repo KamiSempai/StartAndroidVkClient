@@ -36,26 +36,25 @@ public class ResourcePickerActivity extends NavigationDrawerActivity implements 
 
     @Override
     public void onClickFriends() {
-        // На ND выбрана вкладка "Друзья" - закрываем активность и передаем сигнал MainActivity
-        // на установку FriendsFragment
-        setResult(RESULT_OK,new Intent(ChatFragment.SET_FRIENDS_FRAGMENT_ACTION));
+        startActivity(new Intent(this,MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+                |Intent.FLAG_ACTIVITY_SINGLE_TOP).putExtra(MainActivity.NAVIGATION_DRAWER_EVENT,MainActivity.FRIENDS_FRAGMENT));
         mDrawerLayout.closeDrawers();
         finish();
     }
 
     @Override
     public void onClickChooseChat() {
-        // На ND выбрана вкладка "Сообщения" - закрываем активность и передаем сигнал MainActivity
-        // на установку ChooseChatFragment
-        setResult(RESULT_OK,new Intent(ChatFragment.SET_CHOOSE_CHAT_FRAGMENT_ACTION));
+        startActivity(new Intent(this,MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+                |Intent.FLAG_ACTIVITY_SINGLE_TOP).putExtra(MainActivity.NAVIGATION_DRAWER_EVENT,MainActivity.CHOOSE_CHAT_FRAGMENT));
         mDrawerLayout.closeDrawers();
         finish();
     }
 
     @Override
-    public void logout() {
-        // В меню выбрана вкладка logout - закрываем активность и передаем сигнал на уничтожение MainActivity
-        setResult(RESULT_OK,new Intent(ChatFragment.LOGOUT_ACTION));
+    public void onClickLogout() {
+        startActivity(new Intent(this,MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+                |Intent.FLAG_ACTIVITY_SINGLE_TOP).putExtra(MainActivity.NAVIGATION_DRAWER_EVENT,MainActivity.LOGOUT));
+        mDrawerLayout.closeDrawers();
         finish();
     }
 

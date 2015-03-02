@@ -4,6 +4,10 @@
     <string-array name="drawer_array">
         <item>Список чатов</item>
         <item>Друзья</item>
+        <item></item>
+        <item>Logout</item>
+        <item>GCM ON</item>
+        <item>GCM OFF</item>
     </string-array>
 
     <string name="app_name">VK Client</string>
