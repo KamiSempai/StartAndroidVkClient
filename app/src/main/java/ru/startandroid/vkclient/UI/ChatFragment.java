@@ -48,6 +48,9 @@ public class ChatFragment extends Fragment implements View.OnClickListener, Chat
     public static final String DOC_ID_KEY = "DOC_ID_KEY";
     public static final String DOC_SIZE_KEY = "DOC_SIZE_KEY";
     public static final String DOC_TITLE_KEY = "DOC_TITLE_KEY";
+    public static final String SET_FRIENDS_FRAGMENT_ACTION = "ru.startandroid.vkclient.SET_FRIENDS_FRAGMENT_ACTION";
+    public static final String SET_CHOOSE_CHAT_FRAGMENT_ACTION = "ru.startandroid.vkclient.SET_CHOOSE_CHAT_FRAGMENT_ACTION";
+    public static final String LOGOUT_ACTION = "ru.startandroid.vkclient.LOGOUT_ACTION";
 
 
 
@@ -159,6 +162,7 @@ public class ChatFragment extends Fragment implements View.OnClickListener, Chat
         if (resultCode == Activity.RESULT_OK && requestCode == REQUEST_CODE){
             switch (data.getAction()){
                 case PHOTO_FRAGMENT_ACTION:
+                    // В ResourcePickerActivity выбрана фотография
                     Map<String,Object> photoAttachment = new HashMap<String,Object>();
                     photoAttachment.put("type","photo");
                     photoAttachment.put("id",data.getStringExtra(PHOTO_ID_KEY));
@@ -167,6 +171,7 @@ public class ChatFragment extends Fragment implements View.OnClickListener, Chat
                     addAttachment(photoAttachment);
                     break;
                 case AUDIO_FRAGMENT_ACTION:
+                    // В ResourcePickerActivity выбрана аудиозапись
                     Map<String,Object> audioAttachment = new HashMap<String,Object>();
                     audioAttachment.put("type","audio");
                     audioAttachment.put("id",data.getStringExtra(AUDIO_ID_KEY));
@@ -175,6 +180,7 @@ public class ChatFragment extends Fragment implements View.OnClickListener, Chat
                     addAttachment(audioAttachment);
                     break;
                 case DOC_FRAGMENT_ACTION:
+                    // В ResourcePickerActivity выбран документ
                     Map<String,Object> docAttachment = new HashMap<String,Object>();
                     docAttachment.put("type","doc");
                     docAttachment.put("id",data.getStringExtra(DOC_ID_KEY));
@@ -182,6 +188,32 @@ public class ChatFragment extends Fragment implements View.OnClickListener, Chat
                     docAttachment.put("title",data.getStringExtra(DOC_TITLE_KEY));
                     addAttachment(docAttachment);
                     break;
+                case SET_CHOOSE_CHAT_FRAGMENT_ACTION:
+                    // В ResourcePickerActivity на ND нажата вкладка "Сообщения"
+                    if (getActivity() instanceof ChatFragmentListener){
+                        ((ChatFragmentListener) getActivity()).onChooseChooseChatFragment();
+                    }else{
+                        throw new IllegalArgumentException("MainActivity should implement ChatFragmentListener");
+                    }
+                    break;
+                case SET_FRIENDS_FRAGMENT_ACTION:
+                    // В ResourcePickerActivity на ND нажата вкладка "Друзья"
+                    if (getActivity() instanceof ChatFragmentListener){
+                        ((ChatFragmentListener) getActivity()).onChooseFriendsFragment();
+                    }else{
+                        throw new IllegalArgumentException("MainActivity should implement ChatFragmentListener");
+                    }
+                    break;
+                case LOGOUT_ACTION:
+                    // В ResourcePickerActivity в меню нажата вкладка "logout"
+                    if (getActivity() instanceof ChatFragmentListener){
+                        ((ChatFragmentListener) getActivity()).onLogout();
+                    }else{
+                        throw new IllegalArgumentException("MainActivity should implement ChatFragmentListener");
+                    }
+                    break;
+
+
             }
 
         }
@@ -369,6 +401,12 @@ public class ChatFragment extends Fragment implements View.OnClickListener, Chat
                 iterator.remove();
             }
         }
+    }
+
+    public interface ChatFragmentListener{
+        public void onChooseFriendsFragment();
+        public void onChooseChooseChatFragment();
+        public void onLogout();
     }
 
 }

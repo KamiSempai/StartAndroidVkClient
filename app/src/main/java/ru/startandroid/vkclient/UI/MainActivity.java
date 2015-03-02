@@ -8,6 +8,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -16,6 +17,8 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import com.vk.sdk.VKSdk;
 import com.vk.sdk.VKUIHelper;
+
+
 import ru.startandroid.vkclient.gcm.GCM;
 import ru.startandroid.vkclient.gcm.LongPollConnection;
 import ru.startandroid.vkclient.R;
@@ -25,7 +28,7 @@ import android.net.NetworkInfo;
 import android.widget.Toast;
 
 
-public class MainActivity extends ActionBarActivity implements ChooseChatFragment.ChooseChatFragmentListener {
+public class MainActivity extends NavigationDrawerActivity implements ChooseChatFragment.ChooseChatFragmentListener,ChatFragment.ChatFragmentListener {
 
     public static final String LOG_TAG = "myLogs";
     final String CURRENT_FRAGMENT_KEY = "CURRENT_FRAGMENT_KEY";
@@ -34,23 +37,20 @@ public class MainActivity extends ActionBarActivity implements ChooseChatFragmen
     final int FRIENDS_FRAGMENT = 1;
     final int CHAT_FRAGMENT = 2;
     int mCurrentFragment;
-    GCM mGcm;
     private ChooseChatFragment mChooseChatFragment;
     private FriendsFragment mFriendsFragment;
     private String mUserId;
-    private DrawerLayout mDrawerLayout;
-    private Toolbar mToolbar;
+
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
         if(!isConnect(getBaseContext())) {
             Toast.makeText(this, "Нет подключения к сети", Toast.LENGTH_LONG).show();
             finish();
         }
         setContentView(R.layout.activity_main);
-
+        super.onCreate(savedInstanceState);
         VKUIHelper.onCreate(this);
         this.setTitle("");
         mFriendsFragment = new FriendsFragment();
@@ -68,35 +68,28 @@ public class MainActivity extends ActionBarActivity implements ChooseChatFragmen
             }
 
         }
-        mGcm = new GCM(this);
         LongPollConnection.connect(this);// Запуск LongPollService
-        // Toolbar и Navigation Drawer
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(mToolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_drawer);
-        String[] mDrawerArray = getResources().getStringArray(R.array.drawer_array);
-        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        mDrawerLayout.setDrawerListener(new ActionBarDrawerToggle(this,mDrawerLayout,mToolbar,R.string.nd_open,R.string.nd_close ));
-        ListView mDrawerListView = (ListView) findViewById(R.id.left_drawer);
-        mDrawerListView.setAdapter(new ArrayAdapter<String>(this,
-                R.layout.drawer_list_item, mDrawerArray));
-        mDrawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                switch (position){
-                    case 0:
-                        setChooseChatFragment();
-                        mDrawerLayout.closeDrawers();
-                        break;
-                    case 1:
-                        setFriendsFragment();
-                        mDrawerLayout.closeDrawers();
-                        break;
-                }
-            }
-        });
+
   }
+
+    @Override
+    public void onClickFriends() {
+        setFriendsFragment();
+        mDrawerLayout.closeDrawers();
+    }
+
+    @Override
+    public void onClickChooseChat() {
+        setChooseChatFragment();
+        mDrawerLayout.closeDrawers();
+    }
+
+    @Override
+    public void logout() {
+        VKSdk.logout();
+        startActivity(new Intent(this, LoginActivity.class));
+        finish();
+    }
 
 
     private boolean isConnect(Context c) {
@@ -119,11 +112,7 @@ public class MainActivity extends ActionBarActivity implements ChooseChatFragmen
         saveInstanceState.putString(CURRENT_USER_ID_KEY,mUserId);
     }
 
-    private void logout(){
-        VKSdk.logout();
-        startActivity(new Intent(this, LoginActivity.class));
-        finish();
-    }
+
 
     @Override
     protected void onResume() {
@@ -144,35 +133,6 @@ public class MainActivity extends ActionBarActivity implements ChooseChatFragmen
         VKUIHelper.onActivityResult(this, requestCode, resultCode, data);
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_logout) {
-            logout();
-            return true;
-        }else if (id == R.id.action_gcm_on) {
-            mGcm.registerDevice();
-            return true;
-        }else if (id == R.id.action_gcm_off) {
-            mGcm.unRegisterDevice();
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
 
     @Override
     public void eventFromFragmentListMessages(String id) {
@@ -180,7 +140,7 @@ public class MainActivity extends ActionBarActivity implements ChooseChatFragmen
         setChatFragment(id);
     }
 
-    private void setFriendsFragment(){
+    public void setFriendsFragment(){
         if (mFriendsFragment.isAdded())
             return;
         getSupportFragmentManager()
@@ -190,7 +150,7 @@ public class MainActivity extends ActionBarActivity implements ChooseChatFragmen
         mCurrentFragment = FRIENDS_FRAGMENT;
     }
 
-    private void setChooseChatFragment(){
+    public void setChooseChatFragment(){
         if (mChooseChatFragment.isAdded())
             return;
         getSupportFragmentManager()
@@ -212,6 +172,18 @@ public class MainActivity extends ActionBarActivity implements ChooseChatFragmen
     }
 
 
+    @Override
+    public void onChooseFriendsFragment() {
+        setFriendsFragment();
+    }
 
+    @Override
+    public void onChooseChooseChatFragment() {
+        setChooseChatFragment();
+    }
 
+    @Override
+    public void onLogout() {
+        logout();
+    }
 }

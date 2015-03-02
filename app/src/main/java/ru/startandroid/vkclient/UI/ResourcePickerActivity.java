@@ -2,10 +2,7 @@ package ru.startandroid.vkclient.UI;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
-
 import java.util.HashMap;
-
 import ru.startandroid.vkclient.R;
 import ru.startandroid.vkclient.adapters.AudioAdapter;
 import ru.startandroid.vkclient.adapters.DocAdapter;
@@ -14,7 +11,7 @@ import ru.startandroid.vkclient.adapters.GridViewAlbumAdapter;
 /**
  * Активность-хост для фрагментов прикрепленных файлов(PhotoFragment,AlbumFragment,OnePhotoFragment,AudioFragment,DocFragment
  */
-public class ResourcePickerActivity extends ActionBarActivity implements PhotoFragment.PhotoFragmentListener,GridViewAlbumAdapter.GridViewAlbumAdapterListener,AudioAdapter.AudioAdapterListener,DocAdapter.DocAdapterListener{
+public class ResourcePickerActivity extends NavigationDrawerActivity implements PhotoFragment.PhotoFragmentListener,GridViewAlbumAdapter.GridViewAlbumAdapterListener,AudioAdapter.AudioAdapterListener,DocAdapter.DocAdapterListener{
 
     PhotoFragment mPhotoFragment;
     AudioFragment mAudioFragment;
@@ -22,8 +19,8 @@ public class ResourcePickerActivity extends ActionBarActivity implements PhotoFr
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_resource_picker);
+        super.onCreate(savedInstanceState);
         switch (getIntent().getIntExtra("fragment",0)){
             case 1:
                 setPhotoFragment();
@@ -35,6 +32,31 @@ public class ResourcePickerActivity extends ActionBarActivity implements PhotoFr
                 setDocFragment();
                 break;
         }
+    }
+
+    @Override
+    public void onClickFriends() {
+        // На ND выбрана вкладка "Друзья" - закрываем активность и передаем сигнал MainActivity
+        // на установку FriendsFragment
+        setResult(RESULT_OK,new Intent(ChatFragment.SET_FRIENDS_FRAGMENT_ACTION));
+        mDrawerLayout.closeDrawers();
+        finish();
+    }
+
+    @Override
+    public void onClickChooseChat() {
+        // На ND выбрана вкладка "Сообщения" - закрываем активность и передаем сигнал MainActivity
+        // на установку ChooseChatFragment
+        setResult(RESULT_OK,new Intent(ChatFragment.SET_CHOOSE_CHAT_FRAGMENT_ACTION));
+        mDrawerLayout.closeDrawers();
+        finish();
+    }
+
+    @Override
+    public void logout() {
+        // В меню выбрана вкладка logout - закрываем активность и передаем сигнал на уничтожение MainActivity
+        setResult(RESULT_OK,new Intent(ChatFragment.LOGOUT_ACTION));
+        finish();
     }
 
 
